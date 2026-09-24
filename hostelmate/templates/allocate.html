@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Room Allocation Results</h2>
+
+    {% if warning %}
+        <div class="notice">{{ warning }}</div>
+    {% elif rooms %}
+        <p>{{ rooms|length }} room(s) generated from {{ rooms|map(attribute="members")|map("length")|sum }} students.</p>
+
+        {% for room in rooms %}
+        <div class="card room-card">
+            <h3>
+                Room {{ loop.index }} ({{ room.members|length }}-sharing)
+                —
+                <span class="score {{ 'high' if room.avg_compatibility >= 75 else ('mid' if room.avg_compatibility >= 50 else 'low') }}">
+                    {{ room.avg_compatibility }}% compatibility
+                </span>
+            </h3>
+            <table>
+                <tr><th>Name</th><th>Sleep</th><th>Cleanliness</th><th>Noise</th><th>Social</th></tr>
+                {% for m in room.members %}
+                <tr>
+                    <td>{{ m.name }}</td>
+                    <td>{{ m.sleep_schedule }}</td>
+                    <td>{{ m.cleanliness }}</td>
+                    <td>{{ m.noise_tolerance }}</td>
+                    <td>{{ m.social_preference }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% endfor %}
+    {% endif %}
+
+    <a class="btn" href="{{ url_for('allocate') }}">Re-run Allocation</a>
+</div>
+{% endblock %}

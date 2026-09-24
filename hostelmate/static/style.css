@@ -1,0 +1,92 @@
+/* Simple, clean styling — no external CSS framework needed */
+* { box-sizing: border-box; }
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f9;
+    color: #1f2933;
+    margin: 0;
+}
+
+nav {
+    background: #1f3b57;
+    padding: 14px 30px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+nav .brand { color: #fff; font-weight: 700; font-size: 1.2rem; margin-right: auto; }
+nav a { color: #cfe2f3; text-decoration: none; font-weight: 500; }
+nav a:hover { color: #fff; }
+
+.container { max-width: 960px; margin: 30px auto; padding: 0 20px; }
+
+.card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px 28px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 20px;
+}
+
+h1 { color: #1f3b57; }
+h2 { color: #1f3b57; margin-top: 0; }
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px 24px;
+}
+
+.form-group { display: flex; flex-direction: column; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+
+input[type="text"], select {
+    padding: 8px 10px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+select[multiple] { height: 110px; }
+
+button, .btn {
+    background: #2b6cb0;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 10px;
+}
+button:hover, .btn:hover { background: #1f4e7a; }
+.btn-danger { background: #c53030; }
+.btn-danger:hover { background: #922020; }
+
+table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #e2e8f0; font-size: 0.9rem; }
+th { background: #edf2f7; }
+
+.room-card { border-left: 5px solid #2b6cb0; margin-bottom: 16px; }
+.score { font-weight: 700; }
+.score.high { color: #2f855a; }
+.score.mid { color: #b7791f; }
+.score.low { color: #c53030; }
+
+.badge {
+    display: inline-block;
+    background: #edf2f7;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-left: 6px;
+}
+
+.notice { background: #fff8e1; border: 1px solid #f6d365; padding: 12px 16px; border-radius: 8px; }
+.error { background: #fed7d7; border: 1px solid #fc8181; padding: 10px 16px; border-radius: 8px; margin-bottom: 14px; }
+small.hint { color: #718096; }

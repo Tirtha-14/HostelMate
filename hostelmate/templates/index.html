@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h1>HostelMate – Smart Roommate Matching System</h1>
+    <p>
+        HostelMate helps hostel students find compatible roommates based on their
+        preferences, habits, and lifestyle. Students register their sleeping schedule,
+        study habits, cleanliness, noise tolerance, social preference, and more. A
+        weighted compatibility engine scores every possible pair, and a greedy
+        allocation algorithm groups students into 2 / 3 / 4-sharing rooms — ensuring
+        each student is placed exactly once, in the best-matching group available.
+    </p>
+    <a class="btn" href="{{ url_for('register') }}">Register a Student</a>
+    <a class="btn" href="{{ url_for('allocate') }}">Run Room Allocation</a>
+</div>
+
+<div class="card">
+    <h2>How it works</h2>
+    <ol>
+        <li><strong>Register</strong> — every student fills out a preference profile.</li>
+        <li><strong>Score</strong> — HostelMate computes a 0–100 compatibility score for every pair using weighted attribute matching.</li>
+        <li><strong>Allocate</strong> — a greedy nearest-neighbour algorithm groups students into rooms of their preferred size, maximizing average in-room compatibility.</li>
+    </ol>
+</div>
+{% endblock %}

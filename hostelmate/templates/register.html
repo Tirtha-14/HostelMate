@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Register Student Profile</h2>
+    {% if error %}<div class="error">{{ error }}</div>{% endif %}
+    <form method="POST">
+        <div class="form-grid">
+            <div class="form-group full">
+                <label>Full Name</label>
+                <input type="text" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label>Sleep Schedule</label>
+                <select name="sleep_schedule">
+                    {% for opt in options.sleep_schedule %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Wake-up Schedule</label>
+                <select name="wake_schedule">
+                    {% for opt in options.wake_schedule %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Study Habits</label>
+                <select name="study_habits">
+                    {% for opt in options.study_habits %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Cleanliness</label>
+                <select name="cleanliness">
+                    {% for opt in options.cleanliness %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Noise Tolerance</label>
+                <select name="noise_tolerance">
+                    {% for opt in options.noise_tolerance %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Social Preference</label>
+                <select name="social_preference">
+                    {% for opt in options.social_preference %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Guest Frequency</label>
+                <select name="guest_frequency">
+                    {% for opt in options.guest_frequency %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Food Preference</label>
+                <select name="food_preference">
+                    {% for opt in options.food_preference %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Preferred Study Hours</label>
+                <select name="study_hours">
+                    {% for opt in options.study_hours %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Sleeping Environment</label>
+                <select name="sleeping_environment">
+                    {% for opt in options.sleeping_environment %}<option value="{{ opt }}">{{ opt }}</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Room Sharing</label>
+                <select name="room_size">
+                    {% for opt in options.room_size %}<option value="{{ opt }}">{{ opt }}-sharing</option>{% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group full">
+                <label>Preferred Roommate(s) — optional</label>
+                <select name="preferred_roommates" multiple>
+                    {% for s in students %}
+                        <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+                <small class="hint">Hold Ctrl (Cmd on Mac) to select multiple students. Mutual picks get a compatibility bonus.</small>
+            </div>
+        </div>
+        <button type="submit">Save Profile</button>
+    </form>
+</div>
+{% endblock %}

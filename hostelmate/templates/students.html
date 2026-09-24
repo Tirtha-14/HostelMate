@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="card">
+    <h2>Registered Students <span class="badge">{{ students|length }}</span></h2>
+
+    {% if students %}
+    <table>
+        <tr>
+            <th>Name</th><th>Sleep</th><th>Wake</th><th>Study</th><th>Cleanliness</th>
+            <th>Noise</th><th>Social</th><th>Room Size</th><th></th>
+        </tr>
+        {% for s in students %}
+        <tr>
+            <td>{{ s.name }}</td>
+            <td>{{ s.sleep_schedule }}</td>
+            <td>{{ s.wake_schedule }}</td>
+            <td>{{ s.study_habits }}</td>
+            <td>{{ s.cleanliness }}</td>
+            <td>{{ s.noise_tolerance }}</td>
+            <td>{{ s.social_preference }}</td>
+            <td>{{ s.room_size }}-sharing</td>
+            <td>
+                <form method="POST" action="{{ url_for('delete_student', student_id=s.id) }}" style="margin:0;">
+                    <button type="submit" class="btn-danger" style="padding:4px 10px; margin:0;">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <form method="POST" action="{{ url_for('reset') }}" onsubmit="return confirm('Delete ALL students?');">
+        <button type="submit" class="btn-danger">Reset All Data</button>
+    </form>
+    {% else %}
+    <p>No students registered yet. <a href="{{ url_for('register') }}">Add one</a>.</p>
+    {% endif %}
+</div>
+{% endblock %}
