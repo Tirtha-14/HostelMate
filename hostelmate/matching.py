@@ -115,62 +115,97 @@ def _avg_score_to_group(matrix, group_ids, candidate_id):
 
 
 def allocate_rooms(students):
-    """
-    Greedy nearest-neighbour room allocation.
-
-    Algorithm (explain this in viva):
-      1. Compute compatibility for every pair up front.
-      2. Go through students in order. If a student is not yet placed,
-         start a new room for them, sized to THEIR preferred room size.
-      3. Repeatedly pull in whichever unplaced student has the highest
-         AVERAGE compatibility with everyone currently in that room,
-         until the room reaches its target size.
-      4. Repeat until every student has exactly one room.
-
-    This guarantees:
-      - Every student is allocated exactly once.
-      - Rooms fill up favouring the most compatible available students
-        first (mutual "preferred roommate" picks naturally win here
-        because of the bonus score baked into compute_compatibility).
-    """
     if not students:
         return []
 
     matrix = build_compatibility_matrix(students)
-    students_by_id = {s["id"]: s for s in students}
-    unplaced = [s["id"] for s in students]  # preserves registration order
+
+    # Separate students by their preferred room size
+    students_by_size = {
+        2: [],
+        3: [],
+        4: []
+    }
+
+    for student in students:
+        try:
+            size = int(student["room_size"])
+        except (ValueError, TypeError):
+            size = 2
+
+        if size in students_by_size:
+            students_by_size[size].append(student)
+
     rooms = []
 
-    while unplaced:
-        seed_id = unplaced.pop(0)  # take the earliest-registered unplaced student
-        seed = students_by_id[seed_id]
-        try:
-            target_size = int(seed["room_size"])
-        except (ValueError, TypeError):
-            target_size = 2  # safe fallback
+    # Create the best compatible groups separately for each room size
+    for room_size, group in students_by_size.items():
 
-        room_members = [seed_id]
+        while len(group) >= room_size:
 
-        # Keep adding the best-matching remaining student until the room is full
-        while len(room_members) < target_size and unplaced:
-            best_candidate = max(
-                unplaced,
-                key=lambda cid: _avg_score_to_group(matrix, room_members, cid),
-            )
-            room_members.append(best_candidate)
-            unplaced.remove(best_candidate)
+            best_group = None
+            best_score = -1
 
-        # Compute the room's overall compatibility (average of every pair inside it)
-        pair_scores = [
-            _pair_score(matrix, room_members[i], room_members[j])
-            for i in range(len(room_members))
-            for j in range(i + 1, len(room_members))
-        ]
-        avg_score = round(sum(pair_scores) / len(pair_scores)) if pair_scores else 100
+            # Start with every possible student as the first member
+            for seed in group:
 
-        rooms.append({
-            "members": [students_by_id[mid] for mid in room_members],
-            "avg_compatibility": avg_score,
-        })
+                candidates = [
+                    s for s in group
+                    if s["id"] != seed["id"]
+                ]
+
+                # Build a possible room around this student
+                selected = [seed]
+
+                while len(selected) < room_size and candidates:
+                    best_candidate = max(
+                        candidates,
+                        key=lambda candidate: _avg_score_to_group(
+                            matrix,
+                            [s["id"] for s in selected],
+                            candidate["id"]
+                        )
+                    )
+
+                    selected.append(best_candidate)
+                    candidates.remove(best_candidate)
+
+                # Only score complete rooms
+                if len(selected) == room_size:
+                    pair_scores = [
+                        _pair_score(
+                            matrix,
+                            selected[i]["id"],
+                            selected[j]["id"]
+                        )
+                        for i in range(len(selected))
+                        for j in range(i + 1, len(selected))
+                    ]
+
+                    avg_score = (
+                        round(sum(pair_scores) / len(pair_scores))
+                        if pair_scores else 100
+                    )
+
+                    if avg_score > best_score:
+                        best_score = avg_score
+                        best_group = selected
+
+            # If no complete room can be created, stop
+            if best_group is None:
+                break
+
+            # Add the best room
+            rooms.append({
+                "members": best_group,
+                "avg_compatibility": best_score,
+            })
+
+            # Remove those students from the available pool
+            used_ids = {s["id"] for s in best_group}
+            group = [
+                s for s in group
+                if s["id"] not in used_ids
+            ]
 
     return rooms

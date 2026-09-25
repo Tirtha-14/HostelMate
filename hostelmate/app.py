@@ -78,28 +78,39 @@ def students():
     all_students = db.get_all_students()
     return render_template("students.html", students=all_students)
 
-
-@app.route("/students/delete/<int:student_id>", methods=["POST"])
-def delete_student(student_id):
-    db.delete_student(student_id)
-    return redirect(url_for("students"))
-
-
-@app.route("/reset", methods=["POST"])
-def reset():
-    db.clear_all_students()
-    return redirect(url_for("students"))
-
-
 @app.route("/allocate")
 def allocate():
     all_students = db.get_all_students()
-    if len(all_students) < 2:
-        return render_template("allocate.html", rooms=None,
-                                warning="Add at least 2 students before running allocation.")
-    rooms = matching.allocate_rooms(all_students)
-    return render_template("allocate.html", rooms=rooms, warning=None)
 
+    if len(all_students) < 2:
+        return render_template(
+            "allocate.html",
+            rooms=None,
+            waiting=[],
+            warning="Add at least 2 students before running allocation."
+        )
+
+    rooms = matching.allocate_rooms(all_students)
+
+    # Find students who were not placed in a complete room
+    placed_ids = {
+        member["id"]
+        for room in rooms
+        for member in room["members"]
+    }
+
+    waiting = [
+        student
+        for student in all_students
+        if student["id"] not in placed_ids
+    ]
+
+    return render_template(
+        "allocate.html",
+        rooms=rooms,
+        waiting=waiting,
+        warning=None
+    )
 
 if __name__ == "__main__":
     db.init_db()

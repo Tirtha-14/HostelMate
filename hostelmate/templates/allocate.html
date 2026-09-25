@@ -5,8 +5,12 @@
 
     {% if warning %}
         <div class="notice">{{ warning }}</div>
+
     {% elif rooms %}
-        <p>{{ rooms|length }} room(s) generated from {{ rooms|map(attribute="members")|map("length")|sum }} students.</p>
+        <p>
+            {{ rooms|length }} room(s) generated from
+            {{ rooms|map(attribute="members")|map("length")|sum }} students.
+        </p>
 
         {% for room in rooms %}
         <div class="card room-card">
@@ -17,8 +21,16 @@
                     {{ room.avg_compatibility }}% compatibility
                 </span>
             </h3>
+
             <table>
-                <tr><th>Name</th><th>Sleep</th><th>Cleanliness</th><th>Noise</th><th>Social</th></tr>
+                <tr>
+                    <th>Name</th>
+                    <th>Sleep</th>
+                    <th>Cleanliness</th>
+                    <th>Noise</th>
+                    <th>Social</th>
+                </tr>
+
                 {% for m in room.members %}
                 <tr>
                     <td>{{ m.name }}</td>
@@ -33,6 +45,31 @@
         {% endfor %}
     {% endif %}
 
-    <a class="btn" href="{{ url_for('allocate') }}">Re-run Allocation</a>
+
+    {% if waiting %}
+    <div class="card">
+        <h3>Waiting for Roommates</h3>
+
+        <p>
+            These students are waiting because there aren't enough
+            students with the same room-sharing preference yet.
+        </p>
+
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Preferred Room Size</th>
+            </tr>
+
+            {% for student in waiting %}
+            <tr>
+                <td>{{ student.name }}</td>
+                <td>{{ student.room_size }}-sharing</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}
