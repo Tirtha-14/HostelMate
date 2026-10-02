@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2>My Profile</h2>
+
+    {% if not student %}
+        <div class="notice">
+            Your student profile has not been completed yet.
+        </div>
+        <a class="btn" href="{{ url_for('register') }}">Complete Profile</a>
+
+    {% else %}
+        <h3>Personal Details</h3>
+        <p><strong>Name:</strong> {{ student.name }}</p>
+        <p><strong>Username:</strong> {{ session.get("username") }}</p>
+
+        <h3>Lifestyle Preferences</h3>
+
+        <table>
+            <tr><th>Preference</th><th>Selection</th></tr>
+            <tr><td>Sleep Schedule</td><td>{{ student.sleep_schedule }}</td></tr>
+            <tr><td>Wake-up Schedule</td><td>{{ student.wake_schedule }}</td></tr>
+            <tr><td>Study Habits</td><td>{{ student.study_habits }}</td></tr>
+            <tr><td>Cleanliness</td><td>{{ student.cleanliness }}</td></tr>
+            <tr><td>Noise Tolerance</td><td>{{ student.noise_tolerance }}</td></tr>
+            <tr><td>Social Preference</td><td>{{ student.social_preference }}</td></tr>
+            <tr><td>Guest Frequency</td><td>{{ student.guest_frequency }}</td></tr>
+            <tr><td>Food Preference</td><td>{{ student.food_preference }}</td></tr>
+            <tr><td>Study Hours</td><td>{{ student.study_hours }}</td></tr>
+            <tr><td>Sleeping Environment</td><td>{{ student.sleeping_environment }}</td></tr>
+            <tr><td>Preferred Room Size</td><td>{{ student.room_size }}-sharing</td></tr>
+        </table>
+
+        <h3>Preferred Roommates</h3>
+
+        {% if preferred_students %}
+            <ul>
+                {% for roommate in preferred_students %}
+                    <li>{{ roommate.name }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No preferred roommates selected.</p>
+        {% endif %}
+
+        {% if not allocation_locked %}
+            <a class="btn" href="{{ url_for('register') }}">Edit Profile</a>
+        {% endif %}
+    {% endif %}
+</div>
+
+{% if student %}
+<div class="card">
+    <h2>Room Allocation</h2>
+
+    {% if allocation_locked and allocation %}
+        <p>
+            <strong>Room:</strong>
+            Room {{ allocation.room_number }}
+            ({{ allocation.room_size }}-sharing)
+        </p>
+
+        <p>
+            <strong>Room Compatibility:</strong>
+            {{ allocation.avg_compatibility }}%
+        </p>
+
+        <h3>Roommates</h3>
+
+        {% if allocation.roommates %}
+            <ul>
+                {% for roommate in allocation.roommates %}
+                    <li>{{ roommate.name }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No roommates assigned.</p>
+        {% endif %}
+
+    {% elif allocation_locked %}
+        <div class="notice">
+            Allocation has been locked, but you were not assigned to a complete room.
+            You are currently on the waiting list.
+        </div>
+
+    {% else %}
+        <div class="notice">
+            Room allocation has not been finalized yet.
+        </div>
+    {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

@@ -1,25 +1,65 @@
 {% extends "base.html" %}
+
 {% block content %}
+
 <div class="card">
     <h1>HostelMate – Smart Roommate Matching System</h1>
+
     <p>
-        HostelMate helps hostel students find compatible roommates based on their
-        preferences, habits, and lifestyle. Students register their sleeping schedule,
-        study habits, cleanliness, noise tolerance, social preference, and more. A
-        weighted compatibility engine scores every possible pair, and a greedy
-        allocation algorithm groups students into 2 / 3 / 4-sharing rooms — ensuring
-        each student is placed exactly once, in the best-matching group available.
+        HostelMate helps students find compatible roommates based on
+        their lifestyle preferences, habits, and room-sharing requirements.
     </p>
-    <a class="btn" href="{{ url_for('register') }}">Register a Student</a>
-    <a class="btn" href="{{ url_for('allocate') }}">Run Room Allocation</a>
+
+    <p>
+        Students provide information such as sleeping schedule, study habits,
+        cleanliness, noise tolerance, social preference, guest frequency,
+        food preference, and preferred roommates.
+    </p>
+
+    <a class="btn" href="{{ url_for('register') }}">
+        {% if student %}
+            Edit My Profile
+        {% else %}
+            Complete My Profile
+        {% endif %}
+    </a>
+
+    <a class="btn" href="{{ url_for('student_profile') }}">
+        View My Profile
+    </a>
 </div>
 
 <div class="card">
-    <h2>How it works</h2>
+    <h2>How HostelMate Works</h2>
+
     <ol>
-        <li><strong>Register</strong> — every student fills out a preference profile.</li>
-        <li><strong>Score</strong> — HostelMate computes a 0–100 compatibility score for every pair using weighted attribute matching.</li>
-        <li><strong>Allocate</strong> — a greedy nearest-neighbour algorithm groups students into rooms of their preferred size, maximizing average in-room compatibility.</li>
+        <li>
+            <strong>Register</strong> — Students create an account and
+            complete their preference profile.
+        </li>
+
+        <li>
+            <strong>Score</strong> — HostelMate calculates compatibility
+            scores between students using weighted lifestyle preferences.
+        </li>
+
+        <li>
+            <strong>Optimize</strong> — The system searches possible
+            room combinations and prioritizes placing the maximum number
+            of students into complete rooms.
+        </li>
+
+        <li>
+            <strong>Match</strong> — When the number of students placed is
+            the same, the allocation with the higher total compatibility
+            is selected.
+        </li>
+
+        <li>
+            <strong>Finalize</strong> — An administrator reviews the
+            generated allocation and locks it.
+        </li>
     </ol>
 </div>
+
 {% endblock %}

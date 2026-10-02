@@ -1,75 +1,133 @@
 {% extends "base.html" %}
+
 {% block content %}
+
 <div class="card">
-    <h2>Room Allocation Results</h2>
+    <h2>Room Allocation</h2>
 
-    {% if warning %}
-        <div class="notice">{{ warning }}</div>
-
-    {% elif rooms %}
-        <p>
-            {{ rooms|length }} room(s) generated from
-            {{ rooms|map(attribute="members")|map("length")|sum }} students.
-        </p>
-
-        {% for room in rooms %}
-        <div class="card room-card">
-            <h3>
-                Room {{ loop.index }} ({{ room.members|length }}-sharing)
-                —
-                <span class="score {{ 'high' if room.avg_compatibility >= 75 else ('mid' if room.avg_compatibility >= 50 else 'low') }}">
-                    {{ room.avg_compatibility }}% compatibility
-                </span>
-            </h3>
-
-            <table>
-                <tr>
-                    <th>Name</th>
-                    <th>Sleep</th>
-                    <th>Cleanliness</th>
-                    <th>Noise</th>
-                    <th>Social</th>
-                </tr>
-
-                {% for m in room.members %}
-                <tr>
-                    <td>{{ m.name }}</td>
-                    <td>{{ m.sleep_schedule }}</td>
-                    <td>{{ m.cleanliness }}</td>
-                    <td>{{ m.noise_tolerance }}</td>
-                    <td>{{ m.social_preference }}</td>
-                </tr>
-                {% endfor %}
-            </table>
+    {% if allocation_locked %}
+        <div class="notice">
+            <strong>Allocation is LOCKED.</strong>
+            Students can no longer edit their profiles.
         </div>
+
+        <form method="POST" action="{{ url_for('unlock_allocation') }}">
+            <button type="submit">Unlock Allocation</button>
+        </form>
+
+    {% else %}
+        <div class="notice">
+            Allocation is currently unlocked.
+            You can generate and review an allocation before locking it.
+        </div>
+
+        <form method="POST" action="{{ url_for('generate_allocation') }}">
+            <button type="submit">Generate / Refresh Allocation</button>
+        </form>
+    {% endif %}
+</div>
+
+
+{% if rooms %}
+
+<div class="card">
+    <h2>Generated Rooms</h2>
+
+    <p>
+        <strong>{{ rooms|length }}</strong> room(s) generated.
+    </p>
+</div>
+
+{% for room in rooms %}
+
+<div class="card room-card">
+
+    <h3>
+        Room {{ room.room_number }}
+        ({{ room.room_size }}-sharing)
+        —
+        <span class="score {{ 'high' if room.avg_compatibility >= 75 else ('mid' if room.avg_compatibility >= 50 else 'low') }}">
+            {{ room.avg_compatibility }}% compatibility
+        </span>
+    </h3>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Sleep</th>
+            <th>Wake</th>
+            <th>Cleanliness</th>
+            <th>Noise</th>
+            <th>Social</th>
+        </tr>
+
+        {% for member in room.members %}
+        <tr>
+            <td>{{ member.name }}</td>
+            <td>{{ member.sleep_schedule }}</td>
+            <td>{{ member.wake_schedule }}</td>
+            <td>{{ member.cleanliness }}</td>
+            <td>{{ member.noise_tolerance }}</td>
+            <td>{{ member.social_preference }}</td>
+        </tr>
         {% endfor %}
-    {% endif %}
-
-
-    {% if waiting %}
-    <div class="card">
-        <h3>Waiting for Roommates</h3>
-
-        <p>
-            These students are waiting because there aren't enough
-            students with the same room-sharing preference yet.
-        </p>
-
-        <table>
-            <tr>
-                <th>Name</th>
-                <th>Preferred Room Size</th>
-            </tr>
-
-            {% for student in waiting %}
-            <tr>
-                <td>{{ student.name }}</td>
-                <td>{{ student.room_size }}-sharing</td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-    {% endif %}
+    </table>
 
 </div>
+
+{% endfor %}
+
+{% if not allocation_locked %}
+<div class="card">
+    <h3>Finalize Allocation</h3>
+
+    <p>
+        Review the generated rooms carefully. Once locked, students
+        will no longer be able to edit their profiles.
+    </p>
+
+    <form method="POST" action="{{ url_for('lock_allocation') }}">
+        <button type="submit">Lock Allocation</button>
+    </form>
+</div>
+{% endif %}
+
+{% endif %}
+
+
+{% if waiting %}
+
+<div class="card">
+    <h2>Waiting Students</h2>
+
+    <p>
+        These students could not be placed into a complete room
+        according to their preferred room size.
+    </p>
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Preferred Room Size</th>
+        </tr>
+
+        {% for student in waiting %}
+        <tr>
+            <td>{{ student.name }}</td>
+            <td>{{ student.room_size }}-sharing</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+{% elif rooms %}
+
+<div class="card">
+    <p>
+        All registered students have been placed into complete rooms.
+    </p>
+</div>
+
+{% endif %}
+
 {% endblock %}

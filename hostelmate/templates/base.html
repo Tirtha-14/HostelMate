@@ -5,16 +5,57 @@
     <title>HostelMate</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
+
+    {% if session.get("user_id") %}
+
     <nav>
+
         <span class="brand">🏠 HostelMate</span>
-        <a href="{{ url_for('index') }}">Home</a>
-        <a href="{{ url_for('register') }}">Register Student</a>
-        <a href="{{ url_for('students') }}">All Students</a>
-        <a href="{{ url_for('allocate') }}">Allocate Rooms</a>
+
+        {% if session.get("role") == "student" %}
+
+            <a href="{{ url_for('student_home') }}">Home</a>
+            <a href="{{ url_for('register') }}">Register Student</a>
+            <a href="{{ url_for('students') }}">All Students</a>
+            <a href="{{ url_for('student_profile') }}">Profile</a>
+
+        {% elif session.get("role") == "admin" %}
+
+            <a href="{{ url_for('admin_home') }}">Home</a>
+            <a href="{{ url_for('students') }}">All Students</a>
+            <a href="{{ url_for('allocate') }}">Allocate Rooms</a>
+
+        {% endif %}
+
+        <a href="{{ url_for('logout') }}">Logout</a>
+
     </nav>
+
+    {% endif %}
+
     <div class="container">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
+            {% if messages %}
+
+                {% for category, message in messages %}
+
+                    <div class="flash {{ category }}">
+                        {{ message }}
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+        {% endwith %}
+
         {% block content %}{% endblock %}
+
     </div>
+
 </body>
 </html>

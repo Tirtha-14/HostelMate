@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h3>Personal Details</h3>
+
+<table>
+    <tr>
+        <th>Detail</th>
+        <th>Information</th>
+    </tr>
+
+    <tr>
+        <td>Name</td>
+        <td>{{ student.name }}</td>
+    </tr>
+
+    <tr>
+        <td>Age</td>
+        <td>{{ student.age }}</td>
+    </tr>
+
+    <tr>
+        <td>Branch / Course</td>
+        <td>{{ student.branch }}</td>
+    </tr>
+
+    <tr>
+        <td>Phone Number</td>
+        <td>{{ student.phone }}</td>
+    </tr>
+
+    <tr>
+        <td>Email</td>
+        <td>{{ student.email }}</td>
+    </tr>
+</table>
+
+<div class="card">
+    <h2>Student Profile</h2>
+
+    <h3>Personal Details</h3>
+
+    <p><strong>Name:</strong> {{ student.name }}</p>
+
+    <h3>Lifestyle Preferences</h3>
+
+    <table>
+        <tr>
+            <th>Preference</th>
+            <th>Selection</th>
+        </tr>
+
+        <tr>
+            <td>Sleep Schedule</td>
+            <td>{{ student.sleep_schedule }}</td>
+        </tr>
+
+        <tr>
+            <td>Wake-up Schedule</td>
+            <td>{{ student.wake_schedule }}</td>
+        </tr>
+
+        <tr>
+            <td>Study Habits</td>
+            <td>{{ student.study_habits }}</td>
+        </tr>
+
+        <tr>
+            <td>Cleanliness</td>
+            <td>{{ student.cleanliness }}</td>
+        </tr>
+
+        <tr>
+            <td>Noise Tolerance</td>
+            <td>{{ student.noise_tolerance }}</td>
+        </tr>
+
+        <tr>
+            <td>Social Preference</td>
+            <td>{{ student.social_preference }}</td>
+        </tr>
+
+        <tr>
+            <td>Guest Frequency</td>
+            <td>{{ student.guest_frequency }}</td>
+        </tr>
+
+        <tr>
+            <td>Food Preference</td>
+            <td>{{ student.food_preference }}</td>
+        </tr>
+
+        <tr>
+            <td>Study Hours</td>
+            <td>{{ student.study_hours }}</td>
+        </tr>
+
+        <tr>
+            <td>Sleeping Environment</td>
+            <td>{{ student.sleeping_environment }}</td>
+        </tr>
+
+        <tr>
+            <td>Preferred Room Size</td>
+            <td>{{ student.room_size }}-sharing</td>
+        </tr>
+    </table>
+
+    <h3>Preferred Roommates</h3>
+
+    {% if student.preferred_roommates %}
+        <p>{{ student.preferred_roommates }}</p>
+    {% else %}
+        <p>No preferred roommates selected.</p>
+    {% endif %}
+
+    <a class="btn" href="{{ url_for('students') }}">
+        Back to All Students
+    </a>
+</div>
+
+{% endblock %}

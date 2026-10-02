@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card">
+    <h1>Admin Dashboard</h1>
+
+    <p>
+        Welcome, <strong>{{ session.get("username") }}</strong>.
+    </p>
+
+    <p>
+        HostelMate administration and room allocation controls are available here.
+    </p>
+</div>
+
+<div class="card">
+    <h2>System Status</h2>
+
+    <p>
+        <strong>Registered Students:</strong>
+        {{ students|length }}
+    </p>
+
+    <p>
+        <strong>Allocation Status:</strong>
+
+        {% if allocation_locked %}
+            <span class="badge">LOCKED</span>
+        {% else %}
+            <span class="badge">UNLOCKED</span>
+        {% endif %}
+    </p>
+</div>
+
+<div class="card">
+    <h2>Admin Actions</h2>
+
+    <a class="btn" href="{{ url_for('students') }}">
+        View All Students
+    </a>
+
+    <a class="btn" href="{{ url_for('allocate') }}">
+        Allocate Rooms
+    </a>
+</div>
+
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="auth-container">
+
+    <div class="card auth-card">
+
+        <h2>Create Admin Account</h2>
+
+        <p class="hint">
+            Administrator registration requires an authorized
+            administration key.
+        </p>
+
+        {% if error %}
+            <div class="error">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST">
+
+            <div class="form-group">
+                <label>Username</label>
+
+                <input
+                    type="text"
+                    name="username"
+                    required
+                    minlength="3"
+                    autocomplete="username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+
+                <input
+                    type="password"
+                    name="password"
+                    required
+                    minlength="6"
+                    autocomplete="new-password"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+
+                <input
+                    type="password"
+                    name="confirm_password"
+                    required
+                    minlength="6"
+                    autocomplete="new-password"
+                >
+            </div>
+
+            <div class="form-group">
+                <label>Admin Registration Key</label>
+
+                <input
+                    type="password"
+                    name="admin_key"
+                    required
+                >
+            </div>
+
+            <button type="submit">
+                Create Admin Account
+            </button>
+
+        </form>
+
+        <div class="auth-links">
+
+            <p>
+                Already have an account?
+                <a href="{{ url_for('login') }}">Login</a>
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

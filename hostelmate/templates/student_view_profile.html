@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="card">
+
+    <h2>{{ student.name }}'s Preferences</h2>
+    {% if compatibility is not none %}
+<div class="notice">
+    <strong>Compatibility with you:</strong>
+    {{ compatibility }}%
+</div>
+{% endif %}
+
+    <p class="hint">
+        Use these preferences to compare compatibility with your own
+        preferences and decide whether you want to change your preferred
+        room size.
+    </p>
+
+    <table>
+
+        <tr>
+            <th>Preference</th>
+            <th>Selection</th>
+        </tr>
+
+        <tr>
+            <td>Preferred Room Size</td>
+            <td><strong>{{ student.room_size }}-sharing</strong></td>
+        </tr>
+
+        <tr>
+            <td>Sleep Schedule</td>
+            <td>{{ student.sleep_schedule }}</td>
+        </tr>
+
+        <tr>
+            <td>Wake-up Schedule</td>
+            <td>{{ student.wake_schedule }}</td>
+        </tr>
+
+        <tr>
+            <td>Study Habits</td>
+            <td>{{ student.study_habits }}</td>
+        </tr>
+
+        <tr>
+            <td>Cleanliness</td>
+            <td>{{ student.cleanliness }}</td>
+        </tr>
+
+        <tr>
+            <td>Noise Tolerance</td>
+            <td>{{ student.noise_tolerance }}</td>
+        </tr>
+
+        <tr>
+            <td>Social Preference</td>
+            <td>{{ student.social_preference }}</td>
+        </tr>
+
+        <tr>
+            <td>Guest Frequency</td>
+            <td>{{ student.guest_frequency }}</td>
+        </tr>
+
+        <tr>
+            <td>Food Preference</td>
+            <td>{{ student.food_preference }}</td>
+        </tr>
+
+        <tr>
+            <td>Study Hours</td>
+            <td>{{ student.study_hours }}</td>
+        </tr>
+
+        <tr>
+            <td>Sleeping Environment</td>
+            <td>{{ student.sleeping_environment }}</td>
+        </tr>
+
+    </table>
+
+    <a class="btn" href="{{ url_for('students') }}">
+        Back to All Students
+    </a>
+
+</div>
+
+{% endblock %}

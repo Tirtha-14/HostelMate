@@ -90,3 +90,85 @@ th { background: #edf2f7; }
 .notice { background: #fff8e1; border: 1px solid #f6d365; padding: 12px 16px; border-radius: 8px; }
 .error { background: #fed7d7; border: 1px solid #fc8181; padding: 10px 16px; border-radius: 8px; margin-bottom: 14px; }
 small.hint { color: #718096; }
+/* =========================================================
+   AUTHENTICATION PAGES
+   ========================================================= */
+
+.auth-container {
+    max-width: 500px;
+    margin: 50px auto;
+}
+
+.auth-card {
+    padding: 30px;
+}
+
+.auth-card h2 {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.auth-card .form-group {
+    margin-bottom: 16px;
+}
+
+.auth-card input[type="password"],
+.auth-card input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+}
+
+.auth-card select {
+    width: 100%;
+}
+
+.auth-card button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.auth-links {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.auth-links a {
+    color: #2b6cb0;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+.hint {
+    color: #718096;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+/* =========================================================
+   FLASH MESSAGES
+   ========================================================= */
+
+.flash {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    border: 1px solid;
+}
+
+.flash.success {
+    background: #e6ffed;
+    border-color: #68d391;
+    color: #276749;
+}
+
+.flash.error {
+    background: #fed7d7;
+    border-color: #fc8181;
+    color: #9b2c2c;
+}
