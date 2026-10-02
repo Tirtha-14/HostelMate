@@ -7,9 +7,9 @@ profile a student fills in through the registration form.
 """
 
 import sqlite3
+import os
 
-DB_NAME = "hostelmate.db"
-
+DB_NAME = os.path.join(os.path.dirname(__file__), "hostelmate.db")
 
 def get_connection():
     """Open a new connection. sqlite3 connections are cheap, so we open
