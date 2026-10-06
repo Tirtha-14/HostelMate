@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, tone, completion_pct %}
+{% block title %}My Profile · HostelMate{% endblock %}
+
+{% block content %}
+
+{% set pct = completion_pct(student)|int %}
+
+<div class="page-head">
+    <div>
+        <h1>My Profile</h1>
+        <p>Your details and your lifestyle preferences, kept separate.</p>
+    </div>
+    <div class="page-actions">
+        {% if student and not allocation_locked %}
+            <a class="btn" href="{{ url_for('register') }}">{{ icon('edit') }} Edit Profile</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if not student %}
+
+    <div class="card empty">
+        <span class="chip-icon warning">{{ icon('clipboard') }}</span>
+        <h2>Profile Completion — 0%</h2>
+        <div class="progress" style="max-width:320px;margin:14px auto 0"><span style="width:0"></span></div>
+        <p>Complete your profile to participate in room allocation. It takes about two minutes.</p>
+        <a class="btn" href="{{ url_for('register') }}">{{ icon('edit') }} Complete Profile</a>
+    </div>
+
+{% else %}
+
+    <div class="card">
+        <div class="profile-hero">
+            <span class="avatar avatar-lg">{{ student.name|initials }}</span>
+            <div class="who">
+                <h2>{{ student.name }}</h2>
+                <p>@{{ session.get("username") }}</p>
+            </div>
+            {% if pct >= 100 %}
+                <span class="badge badge-success">{{ icon('check') }} PROFILE COMPLETE</span>
+            {% else %}
+                <span class="badge badge-warning">{{ icon('alert') }} {{ pct }}% COMPLETE</span>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if pct < 100 %}
+    <div class="card completion-card mt">
+        <div class="card-head" style="margin-bottom:0">
+            <span class="chip-icon warning">{{ icon('clipboard') }}</span>
+            <div><h2>Profile Completion — {{ pct }}%</h2><p class="hint">Complete your profile to participate in room allocation.</p></div>
+        </div>
+        <div class="progress"><span style="width: {{ pct }}%"></span></div>
+        <a class="btn btn-sm" href="{{ url_for('register') }}">{{ icon('edit') }} Complete Profile</a>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-2 mt">
+
+        <section class="card">
+            <div class="card-head">
+                <span class="chip-icon">{{ icon('user') }}</span>
+                <h2>Personal Details</h2>
+            </div>
+            <div class="detail-list">
+                <div class="detail-row">{{ icon('user') }}<span class="k">Name</span><span class="v">{{ student.name }}</span></div>
+                <div class="detail-row">{{ icon('calendar') }}<span class="k">Age</span><span class="v">{{ student.age or '—' }}</span></div>
+                <div class="detail-row">{{ icon('cap') }}<span class="k">Branch</span><span class="v">{{ student.branch or '—' }}</span></div>
+                <div class="detail-row">{{ icon('mail') }}<span class="k">Email</span><span class="v">{{ student.email or '—' }}</span></div>
+                <div class="detail-row">{{ icon('phone') }}<span class="k">Phone</span><span class="v">{{ student.phone or '—' }}</span></div>
+            </div>
+        </section>
+
+        <section class="card">
+            <div class="card-head">
+                <span class="chip-icon">{{ icon('home') }}</span>
+                <h2>Room Allocation</h2>
+                <span class="spacer">
+                    {% if allocation_locked and allocation %}<span class="badge badge-success">{{ icon('check') }} ALLOCATED</span>
+                    {% elif allocation_pending %}<span class="badge badge-neutral">UPDATING</span>
+                    {% elif allocation_locked %}<span class="badge badge-warning">{{ icon('alert') }} WAITING</span>
+                    {% else %}<span class="badge badge-neutral">PENDING</span>{% endif %}
+                </span>
+            </div>
+
+            {% if allocation_locked and allocation %}
+                <div class="detail-list">
+                    <div class="detail-row">{{ icon('home') }}<span class="k">Room</span><span class="v">Room {{ '%02d'|format(allocation.room_number) }}</span></div>
+                    <div class="detail-row">{{ icon('bed') }}<span class="k">Sharing type</span><span class="v">{{ allocation.room_size }}-sharing</span></div>
+                </div>
+                <div class="progress-row" style="margin-top:14px">
+                    <span class="hint">Compatibility</span>
+                    <div class="progress {{ tone(allocation.avg_compatibility) }}"><span style="width: {{ allocation.avg_compatibility }}%"></span></div>
+                    <span class="pct">{{ allocation.avg_compatibility }}%</span>
+                </div>
+
+                <h3 style="margin-top:20px">Roommates</h3>
+                {% if allocation.roommates %}
+                    <div class="roommate-list">
+                        {% for r in allocation.roommates %}
+                        <a class="roommate" href="{{ url_for('student_view_profile', student_id=r.id) }}">
+                            <span class="avatar avatar-sm">{{ r.name|initials }}</span>
+                            <span class="grow">{{ r.name }}</span>
+                            {% if roommate_scores.get(r.id) is not none %}
+                                <span class="badge {{ 'badge-success' if roommate_scores[r.id] >= 75 else ('badge-warning' if roommate_scores[r.id] >= 50 else 'badge-danger') }}">{{ roommate_scores[r.id] }}% MATCH</span>
+                            {% endif %}
+                        </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="hint" style="margin-top:8px">No roommates assigned.</p>
+                {% endif %}
+
+            {% elif allocation_pending %}
+                <div class="alert alert-info">{{ icon('info') }}<div>A new student joined, so the admin is preparing an updated allocation. Your room will appear here once it is ready.</div></div>
+            {% elif allocation_locked %}
+                <div class="alert alert-warning">{{ icon('alert') }}<div>The allocation is locked, but you weren't placed in a complete room. You're on the waiting list.</div></div>
+            {% else %}
+                <div class="alert alert-info">{{ icon('info') }}<div>Room allocation hasn't been finalized yet. Your room and roommates will appear here once the admin locks it.</div></div>
+            {% endif %}
+        </section>
+
+    </div>
+
+    <section class="card mt">
+        <div class="card-head"><span class="chip-icon">{{ icon('users') }}</span><h2>Language &amp; Background</h2></div>
+        <div class="detail-list">
+            <div class="detail-row">{{ icon('book') }}<span class="k">Language preference</span><span class="v">{{ student.language_preference or '—' }}</span></div>
+            <div class="detail-row">{{ icon('user') }}<span class="k">Mother tongue</span><span class="v">{{ student.mother_tongue or '—' }}</span></div>
+            <div class="detail-row">{{ icon('heart') }}<span class="k">Religion</span><span class="v">{{ student.religion or '—' }}</span></div>
+        </div>
+    </section>
+
+    <section class="card mt">
+        <div class="card-head">
+            <span class="chip-icon">{{ icon('heart') }}</span>
+            <h2>Lifestyle Preferences</h2>
+        </div>
+        {% with s=student, mine=none %}{% include "_prefs.html" %}{% endwith %}
+
+        <h3 style="margin-top:24px">Preferred roommates</h3>
+        {% if preferred_students %}
+            <div class="roommate-list">
+                {% for r in preferred_students %}
+                    <div class="roommate"><span class="avatar avatar-sm">{{ r.name|initials }}</span>{{ r.name }}</div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="hint" style="margin-top:8px">No preferred roommates selected.</p>
+        {% endif %}
+    </section>
+
+{% endif %}
+
+{% endblock %}

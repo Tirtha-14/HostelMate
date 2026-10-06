@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, tone, verdict %}
+{% block title %}{{ student.name }} · HostelMate{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div class="profile-hero">
+        <span class="avatar avatar-lg">{{ student.name|initials }}</span>
+        <div class="who">
+            <h1>{{ student.name }}</h1>
+            <p><span class="badge">{{ icon('bed') }} {{ student.room_size }}-SHARING</span>
+               {% if mutual %}<span class="badge badge-success">{{ icon('heart') }} MUTUAL PICK</span>{% endif %}</p>
+        </div>
+    </div>
+    <a class="btn btn-outline" href="{{ url_for('students') }}">{{ icon('arrow-left') }} Back to All Students</a>
+</div>
+
+{% if breakdown %}
+<section class="card {{ tone(breakdown.total) }}">
+    <div class="compat-hero">
+        <div class="gauge" style="--pct: {{ breakdown.total }}"><span>{{ breakdown.total }}<small>%</small></span></div>
+        <div>
+            <h2>Compatibility with you</h2>
+            <p class="compat-label">{{ verdict(breakdown.total) }}</p>
+            <p class="hint" style="margin-top:6px;max-width:52ch">Based on how closely your ten lifestyle preferences line up.
+                {% if breakdown.bonus %}You both picked each other, which adds a +{{ breakdown.bonus }} bonus.{% endif %}</p>
+        </div>
+    </div>
+</section>
+
+<section class="card mt">
+    <div class="card-head">
+        <span class="chip-icon">{{ icon('layers') }}</span>
+        <div><h2>How the score adds up</h2><p class="hint">Each row shows both answers and the points earned.</p></div>
+    </div>
+    <div class="breakdown">
+        <div class="breakdown-row head"><span>Preference</span><span>You</span><span>{{ student.name.split(' ')[0] }}</span><span>Points</span></div>
+        {% for r in breakdown.rows %}
+        <div class="breakdown-row">
+            <span class="b-label">{{ r.label }}</span>
+            <span class="b-val">{{ r.mine }}</span>
+            <span class="b-val">{{ r.theirs }}</span>
+            <span class="b-pts">
+                <span class="progress {{ 'tone-high' if r.ratio >= 0.75 else ('tone-mid' if r.ratio >= 0.4 else 'tone-low') }}"><span style="width: {{ (r.ratio * 100)|round|int }}%"></span></span>
+                <b>{{ r.points|round|int if r.points == r.points|round else r.points }}/{{ r.weight }}</b>
+            </span>
+        </div>
+        {% endfor %}
+        {% if breakdown.bonus %}
+        <div class="breakdown-row">
+            <span class="b-label">Mutual roommate pick</span><span class="b-val">—</span><span class="b-val">—</span>
+            <span class="b-pts"><span></span><b>+{{ breakdown.bonus }}</b></span>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% else %}
+<div class="alert alert-info">{{ icon('info') }}<div>Complete your profile to see how well you match with {{ student.name }}.
+    <a href="{{ url_for('register') }}"><strong>Complete Profile</strong></a></div></div>
+{% endif %}
+
+<section class="card mt">
+    <div class="card-head">
+        <span class="chip-icon">{{ icon('heart') }}</span>
+        <div><h2>{{ student.name.split(' ')[0] }}'s preferences</h2>
+            {% if me %}<p class="hint">Green tiles are the same as yours.</p>{% endif %}</div>
+    </div>
+    {% with s=student, mine=me %}{% include "_prefs.html" %}{% endwith %}
+</section>
+
+<div class="form-actions">
+    <a class="btn btn-outline" href="{{ url_for('students') }}">{{ icon('arrow-left') }} Back</a>
+</div>
+
+{% endblock %}

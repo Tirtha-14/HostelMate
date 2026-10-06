@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, csrf, tone %}
+{% block title %}Allocation · HostelMate{% endblock %}
+
+{# Traits worth showing on each room card #}
+{% set trait_fields = [
+    ('sleep_schedule', 'moon', 'Sleep'),
+    ('wake_schedule', 'sun', 'Wake'),
+    ('cleanliness', 'clean', 'Clean'),
+    ('noise_tolerance', 'noise', 'Noise'),
+    ('study_habits', 'book', 'Study'),
+    ('social_preference', 'users', 'Social')
+] %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Room Allocation</h1>
+        <p>Review the generated rooms, then lock the allocation to finalize it.</p>
+    </div>
+    <div class="page-actions">
+        {% if rooms %}<a class="btn btn-outline" href="{{ url_for('export_allocation') }}">{{ icon('clipboard') }} Export CSV</a>{% endif %}
+        {% if allocation_locked %}
+            {% if allocation_pending and stats.total >= 2 %}
+            <form method="POST" action="{{ url_for('generate_allocation') }}" class="inline-form">
+                {{ csrf() }}<button type="submit" class="btn">{{ icon('zap') }} Generate New Allocation</button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('unlock_allocation') }}" class="inline-form">
+                {{ csrf() }}<button type="submit" class="btn btn-danger">{{ icon('unlock') }} Unlock Allocation</button>
+            </form>
+        {% else %}
+            <form method="POST" action="{{ url_for('generate_allocation') }}" class="inline-form">
+                {{ csrf() }}<button type="submit" class="btn">{{ icon('zap') }} {{ 'Regenerate Allocation' if rooms else 'Generate Allocation' }}</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+
+{% if allocation_pending %}
+    <div class="alert alert-warning">{{ icon('alert') }}<div><strong>New allocation needed.</strong> A student registered after the allocation was locked, so the old allocation was cleared. Existing students stay locked out of editing. Generate a new allocation to include all {{ stats.total }} registered students.</div></div>
+{% elif allocation_locked %}
+    <div class="alert alert-danger">{{ icon('lock') }}<div><strong>Allocation is locked.</strong> Students can no longer edit their profiles. Unlock to make changes.</div></div>
+{% else %}
+    <div class="alert alert-info">{{ icon('unlock') }}<div><strong>Allocation is unlocked.</strong> Generate and review rooms, then lock when you're happy.</div></div>
+{% endif %}
+
+{% if rooms %}
+
+<div class="summary-strip">
+    <div class="card stat-card"><span class="chip-icon">{{ icon('home') }}</span><div><div class="stat-label">Rooms formed</div><div class="stat-value">{{ rooms|length }}</div></div></div>
+    <div class="card stat-card"><span class="chip-icon success">{{ icon('check-circle') }}</span><div><div class="stat-label">Students placed</div><div class="stat-value">{{ stats.allocated }}</div></div></div>
+    <div class="card stat-card"><span class="chip-icon {{ 'warning' if stats.waiting else '' }}">{{ icon('alert') }}</span><div><div class="stat-label">Waiting</div><div class="stat-value">{{ stats.waiting }}</div></div></div>
+    {% set avg = ((rooms|sum(attribute='avg_compatibility')) / (rooms|length))|round|int %}
+    <div class="card stat-card {{ tone(avg) }}"><span class="chip-icon success">{{ icon('heart') }}</span><div><div class="stat-label">Average compatibility</div><div class="stat-value">{{ avg }}%</div></div></div>
+</div>
+
+<div class="grid grid-2">
+    {% for room in rooms %}
+    {% set pct = room.avg_compatibility %}
+    <article class="card room-card {{ tone(pct) }}">
+
+        <div class="room-top">
+            <span class="chip-icon">{{ icon('home') }}</span>
+            <h3>Room {{ '%02d'|format(room.room_number) }}</h3>
+            <span class="badge">{{ room.room_size }}-SHARING</span>
+            <span class="badge {{ 'badge-success' if pct >= 75 else ('badge-warning' if pct >= 50 else 'badge-danger') }}">{{ pct }}% COMPATIBILITY</span>
+        </div>
+
+        <div class="room-body">
+            <div class="room-compat">
+                <div class="label"><span>Compatibility</span><span class="pct">{{ pct }}%</span></div>
+                <div class="progress {{ tone(pct) }}"><span style="width: {{ pct }}%"></span></div>
+            </div>
+
+            <div>
+                {% for m in room.members %}
+                <div class="room-member">
+                    <span class="avatar avatar-sm">{{ m.name|initials }}</span>
+                    <div class="grow">
+                        <div class="name">{{ m.name }}</div>
+                        <div class="tag-row">
+                            {% for f, ic, lab in trait_fields %}
+                                <span class="tag">{{ icon(ic) }} {{ lab }}: {{ m[f] }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {# Traits that every roommate shares #}
+            {% set common = [] %}
+            {% for f, ic, lab in trait_fields %}
+                {% if room.members|map(attribute=f)|unique|list|length == 1 %}
+                    {% set _ = common.append((ic, lab, room.members[0][f])) %}
+                {% endif %}
+            {% endfor %}
+            {% if common %}
+            <div class="shared-traits">
+                <div class="t">{{ icon('check-circle') }} In common</div>
+                <div class="tag-row">
+                    {% for ic, lab, val in common %}<span class="tag">{{ icon(ic) }} {{ lab }}: {{ val }}</span>{% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </article>
+    {% endfor %}
+</div>
+
+{% else %}
+
+<div class="card empty">
+    <span class="chip-icon">{{ icon('layers') }}</span>
+    <h2>No rooms generated yet</h2>
+    <p>{% if stats.total >= 2 %}Press Generate Allocation to group {{ stats.total }} students into the most compatible rooms.{% else %}At least 2 students need to register before rooms can be generated.{% endif %}</p>
+    {% if (not allocation_locked or allocation_pending) and stats.total >= 2 %}
+        <form method="POST" action="{{ url_for('generate_allocation') }}" class="inline-form">
+            {{ csrf() }}<button type="submit" class="btn">{{ icon('zap') }} Generate Allocation</button>
+        </form>
+    {% endif %}
+</div>
+
+{% endif %}
+
+{# ---------- Warnings ---------- #}
+{% if rooms %}
+<section class="mt-lg">
+    {% if waiting %}
+    <div class="alert alert-warning">
+        {{ icon('alert') }}
+        <div style="flex:1">
+            <strong>{{ waiting|length }} student{{ 's' if waiting|length != 1 }} waiting for a complete room.</strong>
+            <ul class="warning-list">
+                {% for size, group in waiting|groupby('room_size') %}
+                <li>
+                    <span class="badge badge-warning">{{ size }}-SHARING</span>
+                    <span class="grow">{% for w in group %}<a href="{{ url_for('admin_student_profile', student_id=w.id) }}">{{ w.name }}</a>{{ ', ' if not loop.last }}{% endfor %}</span>
+                    {% if group|length < size|int %}<span class="hint">needs {{ size|int - group|length }} more {{ size }}-sharing student{{ 's' if size|int - group|length != 1 }}</span>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% else %}
+    <div class="alert alert-success">{{ icon('check-circle') }}<div><strong>All students are placed.</strong> Everyone who registered has a complete room.</div></div>
+    {% endif %}
+
+    {% if not allocation_locked %}
+    <div class="card finalize mt">
+        <div class="card-head" style="margin-bottom:0">
+            <span class="chip-icon">{{ icon('lock') }}</span>
+            <div class="grow"><h2>Finalize allocation</h2><p class="hint">Once locked, students can no longer edit their profiles.</p></div>
+            <form method="POST" action="{{ url_for('lock_allocation') }}" class="inline-form"
+                  onsubmit="return confirm('Lock the allocation? Students will no longer be able to edit their profiles.');">
+                {{ csrf() }}<button type="submit" class="btn btn-success">{{ icon('lock') }} Lock Allocation</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+{% endblock %}

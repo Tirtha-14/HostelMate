@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, tone %}
+{% set is_admin = session.get("role") == "admin" %}
+{% block title %}{{ 'Students' if is_admin else 'All Students' }} · HostelMate{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>{{ 'Students' if is_admin else 'All Students' }}
+            <span class="badge" style="vertical-align:middle;margin-left:6px">{{ students|length }}</span></h1>
+        <p>{% if is_admin %}Everyone who has registered. Open a profile for full details.{% else %}Compare lifestyles and see how well each student matches you.{% endif %}</p>
+    </div>
+</div>
+
+{% if not is_admin and not has_profile %}
+    <div class="alert alert-info">{{ icon('info') }}<div>Complete your profile to see your compatibility with each student.
+        <a href="{{ url_for('register') }}"><strong>Complete Profile</strong></a></div></div>
+{% endif %}
+
+{% if students %}
+
+<div class="toolbar">
+    <label class="search-box" for="search">
+        {{ icon('search') }}
+        <input type="text" id="search" placeholder="Search by name…" autocomplete="off">
+    </label>
+    <div class="filter-chips" id="size-filter" aria-label="Filter by room sharing">
+        <button type="button" class="chip active" data-size="all">All</button>
+        <button type="button" class="chip" data-size="2">2-sharing</button>
+        <button type="button" class="chip" data-size="3">3-sharing</button>
+        <button type="button" class="chip" data-size="4">4-sharing</button>
+    </div>
+    <select id="sort" class="sort-select" aria-label="Sort students">
+        {% if scores %}<option value="match">Best match first</option>{% endif %}
+        <option value="name">Name A–Z</option>
+        <option value="newest">Newest first</option>
+    </select>
+</div>
+
+<div class="grid grid-3" id="student-grid">
+    {% for s in students %}
+    {% set score = scores.get(s.id) if scores else none %}
+    <article class="card student-card {{ tone(score) if score is not none }}"
+             data-name="{{ s.name|lower }}" data-size="{{ s.room_size }}"
+             data-score="{{ score if score is not none else -1 }}" data-id="{{ s.id }}">
+
+        <div class="student-card-head">
+            <span class="avatar avatar-md">{{ s.name|initials }}</span>
+            <div class="grow">
+                <h3>{{ s.name }}</h3>
+                <div class="sub">
+                    <span class="badge">{{ icon('bed') }} {{ s.room_size }}-SHARING</span>
+                    {% if s.id == my_id %}<span class="badge badge-success">YOU</span>{% endif %}
+                </div>
+            </div>
+            {% if score is not none %}<span class="score-pill">{{ score }}%</span>{% endif %}
+        </div>
+
+        <div class="mini-prefs">
+            <div class="mini-pref">{{ icon('moon') }}<span class="k">Sleep</span><span class="v">{{ s.sleep_schedule }}</span></div>
+            <div class="mini-pref">{{ icon('book') }}<span class="k">Study</span><span class="v">{{ s.study_habits }}</span></div>
+            <div class="mini-pref">{{ icon('clean') }}<span class="k">Cleanliness</span><span class="v">{{ s.cleanliness }}</span></div>
+            <div class="mini-pref">{{ icon('noise') }}<span class="k">Noise</span><span class="v">{{ s.noise_tolerance }}</span></div>
+            <div class="mini-pref">{{ icon('users') }}<span class="k">Social</span><span class="v">{{ s.social_preference }}</span></div>
+        </div>
+
+        {% if is_admin %}
+            <a class="btn btn-outline btn-sm" href="{{ url_for('admin_student_profile', student_id=s.id) }}">{{ icon('eye') }} View Full Profile</a>
+        {% elif s.id == my_id %}
+            <a class="btn btn-outline btn-sm" href="{{ url_for('student_profile') }}">{{ icon('user') }} My Profile</a>
+        {% else %}
+            <a class="btn btn-sm" href="{{ url_for('student_view_profile', student_id=s.id) }}">{{ icon('eye') }} View Preferences</a>
+        {% endif %}
+    </article>
+    {% endfor %}
+</div>
+
+<div class="no-results" id="no-results">{{ icon('search', 28) }}<p>No students match your search.</p></div>
+
+{% else %}
+    <div class="card empty">
+        <span class="chip-icon">{{ icon('users') }}</span>
+        <h2>No students yet</h2>
+        <p>Students appear here once they've created an account and filled in their profile.</p>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        var grid = document.getElementById('student-grid');
+        if (!grid) return;
+        var cards = Array.prototype.slice.call(grid.children);
+        var search = document.getElementById('search');
+        var sort = document.getElementById('sort');
+        var chips = document.querySelectorAll('#size-filter .chip');
+        var empty = document.getElementById('no-results');
+        var size = 'all';
+
+        function apply() {
+            var q = search.value.trim().toLowerCase(), shown = 0;
+            cards.forEach(function (c) {
+                var ok = (size === 'all' || c.dataset.size === size) && c.dataset.name.indexOf(q) !== -1;
+                c.style.display = ok ? '' : 'none';
+                if (ok) shown++;
+            });
+            empty.style.display = shown ? 'none' : 'block';
+        }
+        function order() {
+            var by = sort.value;
+            cards.slice().sort(function (a, b) {
+                if (by === 'match')  return b.dataset.score - a.dataset.score || a.dataset.name.localeCompare(b.dataset.name);
+                if (by === 'newest') return b.dataset.id - a.dataset.id;
+                return a.dataset.name.localeCompare(b.dataset.name);
+            }).forEach(function (c) { grid.appendChild(c); });
+        }
+
+        search.addEventListener('input', apply);
+        sort.addEventListener('change', order);
+        chips.forEach(function (chip) {
+            chip.addEventListener('click', function () {
+                chips.forEach(function (c) { c.classList.remove('active'); });
+                chip.classList.add('active');
+                size = chip.dataset.size;
+                apply();
+            });
+        });
+        order();
+    })();
+</script>
+{% endblock %}

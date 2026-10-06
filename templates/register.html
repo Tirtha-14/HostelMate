@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, csrf %}
+{% block title %}{{ 'Edit preferences' if student else 'Complete your profile' }} · HostelMate{% endblock %}
+
+{# One row of radio "pills" #}
+{% macro pills(name, label, ic, opts, selected, suffix='', full=false) %}
+<div class="form-group{{ ' full' if full }}">
+    <div class="pill-label">{{ icon(ic) }} {{ label }}</div>
+    <div class="pill-group" role="radiogroup" aria-label="{{ label }}">
+        {% for opt in opts %}
+            <input type="radio" name="{{ name }}" id="{{ name }}-{{ loop.index }}" value="{{ opt }}"
+                   {% if selected == opt %}checked{% endif %} required>
+            <label for="{{ name }}-{{ loop.index }}">{{ opt }}{{ suffix }}</label>
+        {% endfor %}
+    </div>
+</div>
+{% endmacro %}
+
+{# A labelled dropdown, same look as the other inputs #}
+{% macro dropdown(name, label, ic, opts, selected) %}
+<div class="form-group">
+    <label for="{{ name }}">{{ icon(ic) }} {{ label }}</label>
+    <select id="{{ name }}" name="{{ name }}" required>
+        <option value="" disabled {% if not selected %}selected{% endif %}>Select…</option>
+        {% for opt in opts %}
+            <option value="{{ opt }}" {% if selected == opt %}selected{% endif %}>{{ opt }}</option>
+        {% endfor %}
+    </select>
+</div>
+{% endmacro %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>{{ 'Edit your preferences' if student else 'Complete your profile' }}</h1>
+        <p>The more honestly you answer, the better your roommate match.</p>
+    </div>
+</div>
+
+{% if locked %}
+    <div class="alert alert-warning">{{ icon('lock') }}<div><strong>Allocation is locked.</strong> Your profile can no longer be edited.</div></div>
+{% endif %}
+{% if late_join %}
+    <div class="alert alert-info">{{ icon('info') }}<div><strong>Allocation is locked for existing students.</strong> You can still complete your profile. The admin will generate a new allocation that includes you.</div></div>
+{% endif %}
+{% if error %}
+    <div class="alert alert-danger" role="alert">{{ icon('alert') }}<div>{{ error }}</div></div>
+{% endif %}
+
+<form method="POST">
+    {{ csrf() }}
+    <fieldset class="plain" {% if locked %}disabled{% endif %}>
+
+        <section class="card">
+            <div class="card-head"><span class="chip-icon">{{ icon('user') }}</span><div><h2>Personal details</h2><p class="hint">Only the admin can see your contact details.</p></div></div>
+            <div class="form-grid">
+                <div class="form-group full">
+                    <label for="name">Full name</label>
+                    <input type="text" id="name" name="name" required minlength="2" maxlength="60" value="{{ v.get('name', '') }}" placeholder="e.g. Aarav Sharma">
+                </div>
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" name="age" required min="16" max="40" value="{{ v.get('age', '') or '' }}" placeholder="e.g. 19">
+                </div>
+                <div class="form-group">
+                    <label for="branch">Branch / course</label>
+                    <input type="text" id="branch" name="branch" required value="{{ v.get('branch', '') or '' }}" placeholder="e.g. Computer Engineering">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone number</label>
+                    <input type="tel" id="phone" name="phone" required value="{{ v.get('phone', '') or '' }}" placeholder="e.g. 9876543210">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required value="{{ v.get('email', '') or '' }}" placeholder="e.g. you@college.edu">
+                </div>
+            </div>
+        </section>
+
+        <section class="card mt">
+            <div class="card-head"><span class="chip-icon">{{ icon('users') }}</span><div><h2>Language &amp; background</h2><p class="hint">Only you and the admin can see these details.</p></div></div>
+            <div class="form-grid">
+                {{ dropdown('language_preference', labels.language_preference, 'book',  options.language_preference, v.get('language_preference')) }}
+                {{ dropdown('mother_tongue',       labels.mother_tongue,       'user',  options.mother_tongue,       v.get('mother_tongue')) }}
+                {{ dropdown('religion',            labels.religion,            'heart', options.religion,            v.get('religion')) }}
+            </div>
+        </section>
+
+        <section class="card mt">
+            <div class="card-head"><span class="chip-icon">{{ icon('heart') }}</span><div><h2>Lifestyle preferences</h2><p class="hint">Pick the option that fits you best in each row.</p></div></div>
+            <div class="form-grid">
+                {{ pills('sleep_schedule',       labels.sleep_schedule,       'moon',      options.sleep_schedule,       v.get('sleep_schedule')) }}
+                {{ pills('wake_schedule',        labels.wake_schedule,        'sun',       options.wake_schedule,        v.get('wake_schedule')) }}
+                {{ pills('cleanliness',          labels.cleanliness,          'clean',     options.cleanliness,          v.get('cleanliness')) }}
+                {{ pills('noise_tolerance',      labels.noise_tolerance,      'noise',     options.noise_tolerance,      v.get('noise_tolerance')) }}
+                {{ pills('study_habits',         labels.study_habits,         'book',      options.study_habits,         v.get('study_habits')) }}
+                {{ pills('study_hours',          labels.study_hours,          'clock',     options.study_hours,          v.get('study_hours')) }}
+                {{ pills('social_preference',    labels.social_preference,    'users',     options.social_preference,    v.get('social_preference')) }}
+                {{ pills('guest_frequency',      labels.guest_frequency,      'user-plus', options.guest_frequency,      v.get('guest_frequency')) }}
+                {{ pills('food_preference',      labels.food_preference,      'food',      options.food_preference,      v.get('food_preference')) }}
+                {{ pills('sleeping_environment', labels.sleeping_environment, 'moon',      options.sleeping_environment, v.get('sleeping_environment')) }}
+            </div>
+        </section>
+
+        <section class="card mt">
+            <div class="card-head"><span class="chip-icon">{{ icon('bed') }}</span><div><h2>Room &amp; roommates</h2><p class="hint">Choose your room type, then optionally pick people you'd like to share with.</p></div></div>
+            <div class="form-grid">
+                {{ pills('room_size', 'Room sharing', 'bed', options.room_size, v.get('room_size'), '-sharing', true) }}
+
+                <div class="form-group full">
+                    <div class="pill-label">{{ icon('heart') }} Preferred roommates <span class="hint">(optional)</span>
+                        <span class="badge badge-neutral" id="pick-count" style="margin-left:auto">0 selected</span></div>
+                    {% set chosen = (v.get('preferred_roommates') or '').split(',') %}
+                    {% if students %}
+                    <div class="pick-grid" id="pick-grid">
+                        {% for s in students %}
+                        <div>
+                            <input type="checkbox" name="preferred_roommates" id="pick-{{ s.id }}" value="{{ s.id }}" {% if s.id|string in chosen %}checked{% endif %}>
+                            <label for="pick-{{ s.id }}">
+                                <span class="avatar avatar-sm">{{ s.name|initials }}</span>
+                                <span class="grow">{{ s.name }}</span>
+                                <span class="hint">{{ s.room_size }}-sharing</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <small class="hint" id="pick-hint">Mutual picks earn a compatibility bonus.</small>
+                    {% else %}
+                        <p class="hint">No other students have registered yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </section>
+
+        {% if not locked %}
+        <div class="form-actions">
+            <button type="submit" class="btn">{{ icon('check') }} {{ 'Save changes' if student else 'Save profile' }}</button>
+            {% if student %}<a class="btn btn-outline" href="{{ url_for('student_profile') }}">Cancel</a>{% endif %}
+        </div>
+        {% endif %}
+
+    </fieldset>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Limit roommate picks to (room size - 1), the same rule the server enforces.
+    (function () {
+        var sizeRadios = document.querySelectorAll('input[name="room_size"]');
+        var boxes = document.querySelectorAll('input[name="preferred_roommates"]');
+        var count = document.getElementById('pick-count');
+        var hint = document.getElementById('pick-hint');
+        if (!boxes.length) return;
+
+        function limit() {
+            var checked = document.querySelector('input[name="room_size"]:checked');
+            return checked ? parseInt(checked.value, 10) - 1 : 3;
+        }
+        function refresh() {
+            var max = limit();
+            var picked = Array.prototype.filter.call(boxes, function (b) { return b.checked; }).length;
+            count.textContent = picked + " of " + max + " selected";
+            count.className = "badge " + (picked > max ? "badge-danger" : "badge-neutral");
+            boxes.forEach(function (b) { if (!b.checked) b.disabled = picked >= max; });
+            if (hint) hint.textContent = picked > max
+                ? "A " + (max + 1) + "-sharing room has " + max + " roommate(s). Remove a pick."
+                : "A " + (max + 1) + "-sharing room has " + max + " roommate(s). Mutual picks earn a compatibility bonus.";
+        }
+        boxes.forEach(function (b) { b.addEventListener('change', refresh); });
+        sizeRadios.forEach(function (r) {
+            r.addEventListener('change', function () {
+                boxes.forEach(function (b) { b.disabled = false; });
+                refresh();
+            });
+        });
+        refresh();
+    })();
+</script>
+{% endblock %}
