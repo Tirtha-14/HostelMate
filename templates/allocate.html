@@ -62,11 +62,17 @@
     <article class="card room-card {{ tone(pct) }}">
 
         <div class="room-top">
-            <span class="chip-icon">{{ icon('home') }}</span>
-            <h3>Room {{ '%02d'|format(room.room_number) }}</h3>
-            <span class="badge">{{ room.room_size }}-SHARING</span>
-            <span class="badge {{ 'badge-success' if pct >= 75 else ('badge-warning' if pct >= 50 else 'badge-danger') }}">{{ pct }}% COMPATIBILITY</span>
-        </div>
+    <span class="chip-icon">{{ icon('home') }}</span>
+    <h3>Room {{ '%02d'|format(room.room_number) }}</h3>
+    <span class="badge">{{ room.room_size }}-SHARING</span>
+    <span class="badge {{ 'badge-success' if pct >= 75 else ('badge-warning' if pct >= 50 else 'badge-danger') }}">
+        {{ pct }}% COMPATIBILITY
+    </span>
+
+    {% if room.locked %}
+        <span class="badge badge-success">{{ icon('lock') }} LOCKED</span>
+    {% endif %}
+</div>
 
         <div class="room-body">
             <div class="room-compat">
@@ -106,6 +112,31 @@
             </div>
             {% endif %}
         </div>
+    {% if not allocation_locked %}
+    <div class="room-actions">
+        {% if room.locked %}
+            <form method="POST"
+                  action="{{ url_for('unlock_room', room_number=room.room_number) }}"
+                  class="inline-form"
+                  onsubmit="return confirm('Unlock Room {{ room.room_number }}? Its students can be included in the next allocation.');">
+                {{ csrf() }}
+                <button type="submit" class="btn btn-outline">
+                    {{ icon('unlock') }} Unlock Room
+                </button>
+            </form>
+        {% else %}
+            <form method="POST"
+                  action="{{ url_for('lock_room', room_number=room.room_number) }}"
+                  class="inline-form"
+                  onsubmit="return confirm('Lock Room {{ room.room_number }}? These students will stay together in the next allocation.');">
+                {{ csrf() }}
+                <button type="submit" class="btn btn-success">
+                    {{ icon('lock') }} Lock Room
+                </button>
+            </form>
+        {% endif %}
+    </div>
+{% endif %}
     </article>
     {% endfor %}
 </div>

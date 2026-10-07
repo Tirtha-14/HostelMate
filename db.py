@@ -212,25 +212,34 @@ def init_db():
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS allocation_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-            room_number INTEGER NOT NULL,
-
-            room_size TEXT NOT NULL,
-
-            avg_compatibility INTEGER NOT NULL,
-
-            student_id INTEGER NOT NULL,
-
-            FOREIGN KEY (student_id)
-                REFERENCES students(id)
-                ON DELETE CASCADE
-        )
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    room_number INTEGER NOT NULL,
+    room_size TEXT NOT NULL,
+    avg_compatibility INTEGER NOT NULL,
+    student_id INTEGER NOT NULL,
+    locked INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (student_id)
+        REFERENCES students(id)
+        ON DELETE CASCADE
+    )
         """
     )
+    # Add room-lock support to older databases.
+    existing_allocation_columns = {
+        row["name"]
+        for row in conn.execute(
+            "PRAGMA table_info(allocation_results)"
+        ).fetchall()
+    }
 
+    if "locked" not in existing_allocation_columns:
+        conn.execute(
+            """
+            ALTER TABLE allocation_results
+            ADD COLUMN locked INTEGER NOT NULL DEFAULT 0
+            """
+        )
     conn.commit()
-
     conn.close()
 
 
@@ -634,35 +643,47 @@ def clear_all_students():
 # =============================================================
 
 def clear_allocation():
-    """Delete all saved allocation results."""
+    """Delete only unlocked allocation results."""
 
     conn = get_connection()
 
     conn.execute(
-        "DELETE FROM allocation_results"
+        "DELETE FROM allocation_results WHERE locked = 0"
     )
 
     conn.commit()
-
     conn.close()
 
-
 def save_allocation(rooms):
-    """Save generated room allocation."""
+    """Save a newly generated allocation while preserving locked rooms."""
 
     conn = get_connection()
 
-    # Remove previous allocation.
+    # Find room numbers that are already locked.
+    locked_room_rows = conn.execute(
+        """
+        SELECT DISTINCT room_number
+        FROM allocation_results
+        WHERE locked = 1
+        ORDER BY room_number
+        """
+    ).fetchall()
 
+    locked_room_numbers = {
+        row["room_number"]
+        for row in locked_room_rows
+    }
+
+    # Remove only unlocked rooms.
     conn.execute(
-        "DELETE FROM allocation_results"
+        "DELETE FROM allocation_results WHERE locked = 0"
     )
-
-    for room_number, room in enumerate(
-        rooms,
-        start=1
-    ):
-
+    # Find the lowest available room number for new rooms.
+    next_room_number = 1
+    for room in rooms:
+        while next_room_number in locked_room_numbers:
+            next_room_number += 1
+        room_number = next_room_number
         room_size = str(
             len(room["members"])
         )
@@ -670,7 +691,6 @@ def save_allocation(rooms):
         avg_compatibility = int(
             room["avg_compatibility"]
         )
-
         for member in room["members"]:
 
             conn.execute(
@@ -679,20 +699,22 @@ def save_allocation(rooms):
                     room_number,
                     room_size,
                     avg_compatibility,
-                    student_id
+                    student_id,
+                    locked
                 )
-                VALUES (?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, 0)
                 """,
                 (
                     room_number,
                     room_size,
                     avg_compatibility,
-                    member["id"]
+                    member["id"],
                 )
             )
 
-    conn.commit()
+        next_room_number += 1
 
+    conn.commit()
     conn.close()
 
 
@@ -721,10 +743,11 @@ def get_allocation():
     rows = conn.execute(
         """
         SELECT
-            ar.room_number,
-            ar.room_size AS allocated_room_size,
-            ar.avg_compatibility,
-            s.*
+        ar.room_number,
+        ar.room_size AS allocated_room_size,
+        ar.avg_compatibility,
+        ar.locked,
+        s.*
         FROM allocation_results ar
 
         JOIN students s
@@ -747,11 +770,12 @@ def get_allocation():
         if room_number not in rooms:
 
             rooms[room_number] = {
-                "room_number": room_number,
-                "room_size": row["allocated_room_size"],
-                "avg_compatibility": row["avg_compatibility"],
-                "members": []
-            }
+            "room_number": room_number,
+            "room_size": row["allocated_room_size"],
+            "avg_compatibility": row["avg_compatibility"],
+            "locked": bool(row["locked"]),
+            "members": []
+        }
 
         rooms[room_number]["members"].append(
             row
@@ -843,3 +867,78 @@ def get_allocated_student_ids():
         row["student_id"]
         for row in rows
     }
+def get_locked_student_ids():
+    """Return IDs of students who are inside locked rooms."""
+
+    conn = get_connection()
+
+    rows = conn.execute(
+        """
+        SELECT DISTINCT student_id
+        FROM allocation_results
+        WHERE locked = 1
+        """
+    ).fetchall()
+
+    conn.close()
+
+    return {
+        row["student_id"]
+        for row in rows
+    }
+
+
+def room_exists(room_number):
+    """Return True if the room exists in the current allocation."""
+
+    conn = get_connection()
+
+    row = conn.execute(
+        """
+        SELECT 1
+        FROM allocation_results
+        WHERE room_number = ?
+        LIMIT 1
+        """,
+        (room_number,)
+    ).fetchone()
+
+    conn.close()
+
+    return row is not None
+
+
+def lock_room(room_number):
+    """Lock every student currently assigned to a room."""
+
+    conn = get_connection()
+
+    conn.execute(
+        """
+        UPDATE allocation_results
+        SET locked = 1
+        WHERE room_number = ?
+        """,
+        (room_number,)
+    )
+
+    conn.commit()
+    conn.close()
+
+
+def unlock_room(room_number):
+    """Unlock every student currently assigned to a room."""
+
+    conn = get_connection()
+
+    conn.execute(
+        """
+        UPDATE allocation_results
+        SET locked = 0
+        WHERE room_number = ?
+        """,
+        (room_number,)
+    )
+
+    conn.commit()
+    conn.close()

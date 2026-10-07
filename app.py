@@ -76,17 +76,8 @@ app.secret_key = _load_secret_key()
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-# Needed to create an admin account. Set HOSTELMATE_ADMIN_KEY to choose it.
-# If it is not set, a key is worked out from the secret key above, so it stays
-# the SAME every time you restart (the debug auto-reloader used to print one
-# key but use another). It is printed once in the terminal when the app starts.
-ADMIN_REGISTRATION_KEY = os.environ.get("HOSTELMATE_ADMIN_KEY")
-if not ADMIN_REGISTRATION_KEY:
-    ADMIN_REGISTRATION_KEY = hmac.new(
-        app.secret_key.encode("utf-8"), b"hostelmate-admin-key", "sha256"
-    ).hexdigest()[:12]
-    if os.environ.get("WERKZEUG_RUN_MAIN") != "true":  # print once, not twice
-        print(f"\n  Admin registration key: {ADMIN_REGISTRATION_KEY}\n")
+# Fixed key required to create an admin account.
+ADMIN_REGISTRATION_KEY = "HOSTELMATE2026"
 
 # Choices for the three background fields (shown as dropdowns).
 LANGUAGES = [
@@ -695,27 +686,54 @@ def allocate():
 @app.route("/admin/generate-allocation", methods=["POST"])
 @admin_required
 def generate_allocation():
-    # A locked allocation that still exists is protected. A locked allocation
-    # that was cleared (because a new student registered) may be regenerated.
-    if db.is_allocation_locked() and db.has_allocation():
-        flash("Allocation is locked. Unlock it before generating a new one.", "error")
+
+    # A globally locked allocation cannot be regenerated.
+    if db.is_allocation_locked():
+        flash(
+            "Allocation is globally locked. Unlock it before generating a new one.",
+            "error"
+        )
         return redirect(url_for("allocate"))
 
     all_students = db.get_all_students()
+
     if len(all_students) < 2:
-        flash("At least 2 students must register first.", "error")
+        flash(
+            "At least 2 students must register first.",
+            "error"
+        )
         return redirect(url_for("allocate"))
 
-    rooms = matching.allocate_rooms(all_students)
+    # Students already in locked rooms must stay there.
+    locked_student_ids = db.get_locked_student_ids()
+
+    # Only students who are NOT in locked rooms are sent
+    # to the matching algorithm.
+    available_students = [
+        student
+        for student in all_students
+        if student["id"] not in locked_student_ids
+    ]
+
+    rooms = matching.allocate_rooms(available_students)
+
+    # db.save_allocation() will later be updated to preserve
+    # the already-locked rooms and replace only unlocked rooms.
     db.save_allocation(rooms)
 
-    if db.is_allocation_locked():
-        flash("New allocation generated for all registered students. "
-              "It is locked; unlock it if you need to regenerate.", "success")
+    if locked_student_ids:
+        flash(
+            "New allocation generated. Students in locked rooms "
+            "were kept unchanged.",
+            "success"
+        )
     else:
-        flash("Allocation generated. Review it, then lock it.", "success")
+        flash(
+            "Allocation generated. Review it, then lock rooms or "
+            "the full allocation.",
+            "success"
+        )
     return redirect(url_for("allocate"))
-
 
 @app.route("/admin/lock-allocation", methods=["POST"])
 @admin_required
@@ -728,6 +746,61 @@ def lock_allocation():
     flash("Allocation locked. Students can no longer edit their profiles.", "success")
     return redirect(url_for("allocate"))
 
+@app.route("/admin/lock-room/<int:room_number>", methods=["POST"])
+@admin_required
+def lock_room(room_number):
+
+    if db.is_allocation_locked():
+        flash(
+            "The full allocation is already locked.",
+            "error"
+        )
+        return redirect(url_for("allocate"))
+
+    if not db.room_exists(room_number):
+        flash(
+            "Room not found.",
+            "error"
+        )
+        return redirect(url_for("allocate"))
+
+    db.lock_room(room_number)
+
+    flash(
+        f"Room {room_number} has been locked. "
+        "Its students will not be included in the next allocation.",
+        "success"
+    )
+
+    return redirect(url_for("allocate"))
+
+
+@app.route("/admin/unlock-room/<int:room_number>", methods=["POST"])
+@admin_required
+def unlock_room(room_number):
+
+    if db.is_allocation_locked():
+        flash(
+            "Unlock the full allocation before unlocking an individual room.",
+            "error"
+        )
+        return redirect(url_for("allocate"))
+
+    if not db.room_exists(room_number):
+        flash(
+            "Room not found.",
+            "error"
+        )
+        return redirect(url_for("allocate"))
+
+    db.unlock_room(room_number)
+
+    flash(
+        f"Room {room_number} has been unlocked.",
+        "success"
+    )
+
+    return redirect(url_for("allocate"))
 
 @app.route("/admin/unlock-allocation", methods=["POST"])
 @admin_required
