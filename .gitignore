@@ -1,0 +1,4 @@
+.secret_key
+hostelmate.db
+__pycache__/
+*.pyc

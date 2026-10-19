@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, csrf, lock_badge %}
+{% block title %}Dashboard · HostelMate{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1>Admin Dashboard</h1>
+        <p>Welcome back, {{ session.get("username") }}. Here's the state of this year's allocation.</p>
+    </div>
+</div>
+
+<section class="card status-panel">
+    <div class="left">
+        <span class="chip-icon {{ 'danger' if allocation_locked else 'success' }}">{{ icon('lock' if allocation_locked else 'unlock') }}</span>
+        <div>
+            <h2>Allocation status</h2>
+            <p class="hint">
+                {% if allocation_pending %}Locked, but a new student registered — the old allocation was cleared. Generate a new one.
+                {% elif allocation_locked %}Locked — students can no longer edit their profiles.
+                {% elif has_allocation %}A draft allocation is ready to review and lock.
+                {% else %}No allocation generated yet.{% endif %}
+            </p>
+        </div>
+        <span style="margin-left:6px">
+            {% if allocation_locked %}<span class="badge badge-danger">🔒 LOCKED</span>
+            {% else %}<span class="badge badge-success">🟢 UNLOCKED</span>{% endif %}
+        </span>
+    </div>
+
+    <div class="action-row">
+        {% if allocation_locked %}
+            {% if allocation_pending and stats.total >= 2 %}
+            <form method="POST" action="{{ url_for('generate_allocation') }}" class="inline-form">
+                {{ csrf() }}<button type="submit" class="btn">{{ icon('zap') }} Generate New Allocation</button>
+            </form>
+            {% endif %}
+            <form method="POST" action="{{ url_for('unlock_allocation') }}" class="inline-form">
+                {{ csrf() }}<button type="submit" class="btn btn-danger">{{ icon('unlock') }} Unlock Allocation</button>
+            </form>
+        {% else %}
+            <form method="POST" action="{{ url_for('generate_allocation') }}" class="inline-form">
+                {{ csrf() }}<button type="submit" class="btn">{{ icon('zap') }} {{ 'Regenerate Allocation' if has_allocation else 'Generate Allocation' }}</button>
+            </form>
+        {% endif %}
+        <a class="btn btn-outline" href="{{ url_for('students') }}">{{ icon('users') }} View Students</a>
+        {% if has_allocation or allocation_pending %}<a class="btn btn-outline" href="{{ url_for('allocate') }}">{{ icon('layers') }} Open Allocation</a>{% endif %}
+    </div>
+</section>
+
+<div class="grid grid-4 mt">
+    <div class="card stat-card"><span class="chip-icon">{{ icon('users') }}</span><div><div class="stat-label">Total students</div><div class="stat-value">{{ stats.total }}</div></div></div>
+    <div class="card stat-card"><span class="chip-icon success">{{ icon('check-circle') }}</span><div><div class="stat-label">Allocated students</div><div class="stat-value">{{ stats.allocated }}</div></div></div>
+    <div class="card stat-card"><span class="chip-icon {{ 'warning' if stats.waiting else '' }}">{{ icon('alert') }}</span><div><div class="stat-label">Waiting students</div><div class="stat-value">{{ stats.waiting }}</div></div></div>
+    {# The allocator always forms floor(n / size) full rooms per sharing type. #}
+    {% set ns = namespace(rooms=0) %}
+    {% for size, n in stats.by_size.items() %}{% set ns.rooms = ns.rooms + (n // (size|int)) %}{% endfor %}
+    <div class="card stat-card"><span class="chip-icon">{{ icon('home') }}</span><div>
+        <div class="stat-label">Total rooms</div>
+        <div class="stat-value">{{ ns.rooms }}</div>
+        {% if not has_allocation %}<div class="hint" style="font-size:.78rem">will form on generate</div>{% endif %}
+    </div></div>
+</div>
+
+<div class="grid grid-2 mt">
+    <section class="card">
+        <div class="card-head"><span class="chip-icon">{{ icon('bed') }}</span><div><h2>Room-type demand</h2><p class="hint">How many students asked for each sharing type.</p></div></div>
+        {% for size, n in stats.by_size.items() %}
+        <div class="progress-row" style="margin-bottom:12px">
+            <span style="min-width:84px;font-weight:700;color:var(--navy)">{{ size }}-sharing</span>
+            <div class="progress"><span style="width: {{ (n / stats.total * 100)|round|int if stats.total else 0 }}%"></span></div>
+            <span class="pct">{{ n }}</span>
+        </div>
+        {% endfor %}
+    </section>
+
+    <section class="card">
+        <div class="card-head"><span class="chip-icon">{{ icon('user-plus') }}</span><h2>Latest students</h2>
+            <a class="btn btn-outline btn-sm spacer" href="{{ url_for('students') }}">View all</a></div>
+        {% if students %}
+        <div class="roommate-list" style="margin-top:0">
+            {% for s in (students|reverse|list)[:5] %}
+            <a class="roommate" href="{{ url_for('admin_student_profile', student_id=s.id) }}">
+                <span class="avatar avatar-sm">{{ s.name|initials }}</span><span class="grow">{{ s.name }}</span>
+                <span class="badge">{{ s.room_size }}-SHARING</span>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}<p class="hint">No students have registered yet.</p>{% endif %}
+    </section>
+</div>
+
+{% endblock %}

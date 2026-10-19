@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+
+{# Full-screen split layout shared by Login / Student sign-up / Admin sign-up #}
+{% block layout %}
+<div class="auth-shell">
+
+    <section class="auth-brand">
+        <div class="auth-logo">
+            <span class="brand-mark">{{ icon('home', 24) }}</span>
+            HostelMate
+        </div>
+
+        <div class="auth-pitch">
+            <h1>Find the roommate who fits your routine.</h1>
+            <p>Share how you live, see who matches, and get placed in a room that actually works for you.</p>
+
+            <svg class="auth-art" viewBox="0 0 440 250" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <rect x="40" y="40" width="360" height="190" rx="14" fill="#16335c" stroke="#4f7cac" stroke-width="2"/>
+                <rect x="40" y="40" width="360" height="30" rx="14" fill="#1f4478"/>
+                <rect x="40" y="56" width="360" height="14" fill="#1f4478"/>
+                <g stroke="#4f7cac" stroke-width="2">
+                    <rect x="68"  y="90"  width="48" height="38" rx="6" fill="#dbe9f9" stroke="none"/>
+                    <rect x="132" y="90"  width="48" height="38" rx="6"/>
+                    <rect x="196" y="90"  width="48" height="38" rx="6" fill="#9dbbe0" stroke="none"/>
+                    <rect x="260" y="90"  width="48" height="38" rx="6"/>
+                    <rect x="324" y="90"  width="48" height="38" rx="6" fill="#dbe9f9" stroke="none"/>
+                    <rect x="68"  y="148" width="48" height="38" rx="6"/>
+                    <rect x="132" y="148" width="48" height="38" rx="6" fill="#9dbbe0" stroke="none"/>
+                    <rect x="196" y="148" width="48" height="38" rx="6"/>
+                    <rect x="260" y="148" width="48" height="38" rx="6" fill="#dbe9f9" stroke="none"/>
+                    <rect x="324" y="148" width="48" height="38" rx="6"/>
+                </g>
+                <rect x="198" y="196" width="44" height="34" rx="6" fill="#4f7cac"/>
+                <circle cx="372" cy="30" r="14" fill="#4f7cac" opacity=".5"/>
+                <circle cx="60" cy="22" r="6" fill="#4f7cac" opacity=".4"/>
+            </svg>
+        </div>
+
+        <div class="auth-foot">Smart roommate matching for college hostels.</div>
+    </section>
+
+    <section class="auth-panel">
+        <div class="auth-form-wrap">
+            {% include "_flash.html" %}
+            {% block auth_form %}{% endblock %}
+        </div>
+    </section>
+
+</div>
+{% endblock %}

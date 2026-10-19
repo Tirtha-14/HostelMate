@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}{{ code }} · HostelMate{% endblock %}
+
+{% block content %}
+<div class="card empty" style="max-width:520px;margin:48px auto">
+    <span class="chip-icon {{ 'danger' if code >= 500 else 'warning' }}">{{ icon('alert') }}</span>
+    <h1>{{ code }}</h1>
+    <p>{{ message }}</p>
+    {% if session.get("user_id") %}
+        <a class="btn" href="{{ url_for('index') }}">{{ icon('home') }} Back to home</a>
+    {% else %}
+        <a class="btn" href="{{ url_for('login') }}">{{ icon('arrow-left') }} Back to login</a>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{# Needs: s (student row). Optional: mine (viewer's own student row). #}
+{% from "_macros.html" import pref_item %}
+{% set m = mine if mine else none %}
+<div class="pref-grid">
+    {{ pref_item('bed',      'Room sharing',         s.room_size ~ '-sharing', (m.room_size ~ '-sharing') if m else none) }}
+    {{ pref_item('moon',     labels.sleep_schedule,  s.sleep_schedule,      m.sleep_schedule      if m else none) }}
+    {{ pref_item('sun',      labels.wake_schedule,   s.wake_schedule,       m.wake_schedule       if m else none) }}
+    {{ pref_item('book',     labels.study_habits,    s.study_habits,        m.study_habits        if m else none) }}
+    {{ pref_item('clock',    labels.study_hours,     s.study_hours,         m.study_hours         if m else none) }}
+    {{ pref_item('clean',    labels.cleanliness,     s.cleanliness,         m.cleanliness         if m else none) }}
+    {{ pref_item('noise',    labels.noise_tolerance, s.noise_tolerance,     m.noise_tolerance     if m else none) }}
+    {{ pref_item('users',    labels.social_preference, s.social_preference, m.social_preference   if m else none) }}
+    {{ pref_item('user-plus',labels.guest_frequency, s.guest_frequency,     m.guest_frequency     if m else none) }}
+    {{ pref_item('food',     labels.food_preference, s.food_preference,     m.food_preference     if m else none) }}
+    {{ pref_item('moon',     labels.sleeping_environment, s.sleeping_environment, m.sleeping_environment if m else none) }}
+</div>

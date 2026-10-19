@@ -1,0 +1,60 @@
+{% extends "auth_base.html" %}
+{% from "_macros.html" import icon, csrf %}
+{% block title %}Create Admin Account · HostelMate{% endblock %}
+
+{% block auth_form %}
+
+<h2>Create admin account</h2>
+<p class="hint">Admin sign-up needs the registration key printed in the terminal when HostelMate starts.</p>
+
+{% if error %}
+    <div class="alert alert-danger" role="alert">{{ icon('alert') }}<div>{{ error }}</div></div>
+{% endif %}
+
+<form method="POST">
+    {{ csrf() }}
+
+    <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-icon">
+            {{ icon('user') }}
+            <input type="text" id="username" name="username" required minlength="3" maxlength="30"
+                   pattern="[A-Za-z0-9_.\-]{3,30}" title="3 to 30 letters, numbers, dots, dashes or underscores"
+                   autocomplete="username" placeholder="Letters, numbers, . - _"
+                   value="{{ request.form.get('username', '') }}">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-icon">
+            {{ icon('lock') }}
+            <input type="password" id="password" name="password" required minlength="6"
+                   autocomplete="new-password" placeholder="At least 6 characters">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="confirm_password">Confirm password</label>
+        <div class="input-icon">
+            {{ icon('lock') }}
+            <input type="password" id="confirm_password" name="confirm_password" required minlength="6"
+                   autocomplete="new-password" placeholder="Re-enter your password">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="admin_key">Admin registration key</label>
+        <div class="input-icon">
+            {{ icon('key') }}
+            <input type="password" id="admin_key" name="admin_key" required
+                   placeholder="Shown in the terminal when the app starts">
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-block">Create Admin Account</button>
+</form>
+
+<p class="auth-back">Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+
+{% endblock %}

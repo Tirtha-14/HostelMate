@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, tone, completion_pct %}
+{% block title %}Home · HostelMate{% endblock %}
+
+{% block content %}
+
+{% set pct = completion_pct(student)|int %}
+{% set first_name = (student.name.split(' ')[0] if student else session.get('username')) %}
+
+<section class="welcome">
+    <div>
+        <h1><span id="greeting">Welcome back</span>, {{ first_name }} 👋</h1>
+        <p>Here's where you stand with your hostel room. Keep your preferences up to date so we can find your best match.</p>
+    </div>
+    <a class="btn" href="{{ url_for('student_profile') }}">{{ icon('user') }} View My Profile</a>
+</section>
+
+<div class="grid grid-3 mt">
+
+    <div class="card stat-card">
+        <span class="chip-icon {{ 'success' if pct >= 100 else 'warning' }}">{{ icon('check-circle' if pct >= 100 else 'clipboard') }}</span>
+        <div>
+            <div class="stat-label">Profile status</div>
+            {% if pct >= 100 %}
+                <span class="badge badge-success">{{ icon('check') }} PROFILE COMPLETE</span>
+            {% else %}
+                <span class="badge badge-warning">{{ icon('alert') }} {{ pct }}% DONE</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card stat-card">
+        <span class="chip-icon">{{ icon('bed') }}</span>
+        <div>
+            <div class="stat-label">Room type</div>
+            <div class="stat-value sm">{% if student %}{{ student.room_size }}-sharing{% else %}Not chosen yet{% endif %}</div>
+        </div>
+    </div>
+
+    <div class="card stat-card">
+        <span class="chip-icon {{ 'success' if (locked and allocation) else '' }}">{{ icon('home') }}</span>
+        <div>
+            <div class="stat-label">Allocation status</div>
+            {% if locked and allocation %}
+                <span class="badge badge-success">{{ icon('check') }} ROOM {{ '%02d'|format(allocation.room_number) }}</span>
+            {% elif allocation_pending %}
+                <span class="badge badge-neutral">UPDATING</span>
+            {% elif locked %}
+                <span class="badge badge-warning">{{ icon('alert') }} WAITING</span>
+            {% else %}
+                <span class="badge badge-neutral">NOT FINALIZED YET</span>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<div class="mt">
+    {% if pct >= 100 %}
+        <div class="alert alert-success">{{ icon('check-circle') }}<div><strong>Profile Complete</strong> — you're in the matching pool.
+            {% if not locked %}<a href="{{ url_for('register') }}">Edit preferences</a>{% endif %}</div></div>
+    {% else %}
+        <div class="card completion-card">
+            <div class="card-head" style="margin-bottom:0">
+                <span class="chip-icon warning">{{ icon('clipboard') }}</span>
+                <div>
+                    <h2>Profile Completion — {{ pct }}%</h2>
+                    <p class="hint">Complete your profile to participate in room allocation.</p>
+                </div>
+            </div>
+            <div class="progress" role="progressbar" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100"><span style="width: {{ pct }}%"></span></div>
+            <a class="btn btn-sm" href="{{ url_for('register') }}">{{ icon('edit') }} Complete Profile</a>
+        </div>
+    {% endif %}
+</div>
+
+{% if top_matches %}
+<section class="card mt-lg">
+    <div class="card-head">
+        <span class="chip-icon success">{{ icon('heart') }}</span>
+        <div>
+            <h2>Your top matches</h2>
+            <p class="hint">The students whose routines are closest to yours.</p>
+        </div>
+        <a class="btn btn-outline btn-sm spacer" href="{{ url_for('students') }}">See everyone</a>
+    </div>
+    <div class="grid grid-3">
+        {% for s, score in top_matches %}
+        <a class="top-match {{ tone(score) }}" href="{{ url_for('student_view_profile', student_id=s.id) }}">
+            <span class="avatar avatar-md">{{ s.name|initials }}</span>
+            <div class="grow">
+                <div class="name">{{ s.name }}</div>
+                <div class="progress {{ tone(score) }}"><span style="width: {{ score }}%"></span></div>
+            </div>
+            <span class="score-pill">{{ score }}%</span>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="card mt-lg">
+    <div class="card-head">
+        <span class="chip-icon">{{ icon('layers') }}</span>
+        <h2>How HostelMate works</h2>
+    </div>
+    <div class="steps">
+        <div class="step"><div class="step-num">1</div><h3>Tell us about yourself</h3><p>Fill in your sleep, study and lifestyle preferences.</p></div>
+        <div class="step"><div class="step-num">2</div><h3>Compare preferences</h3><p>Browse other students and see how well you match.</p></div>
+        <div class="step"><div class="step-num">3</div><h3>Get matched</h3><p>We group students into the most compatible rooms.</p></div>
+        <div class="step"><div class="step-num">4</div><h3>Move into your room</h3><p>Once the admin locks the allocation, your room is final.</p></div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        var h = new Date().getHours();
+        document.getElementById("greeting").textContent =
+            h < 12 ? "Good morning" : (h < 17 ? "Good afternoon" : "Good evening");
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, csrf, tone %}
+{% block title %}{{ student.name }} · HostelMate{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div class="profile-hero">
+        <span class="avatar avatar-lg">{{ student.name|initials }}</span>
+        <div class="who"><h1>{{ student.name }}</h1><p>Student profile</p></div>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-outline" href="{{ url_for('students') }}">{{ icon('arrow-left') }} Back to Students</a>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <section class="card">
+        <div class="card-head"><span class="chip-icon">{{ icon('user') }}</span><h2>Personal Details</h2></div>
+        <div class="detail-list">
+            <div class="detail-row">{{ icon('user') }}<span class="k">Name</span><span class="v">{{ student.name }}</span></div>
+            <div class="detail-row">{{ icon('calendar') }}<span class="k">Age</span><span class="v">{{ student.age or '—' }}</span></div>
+            <div class="detail-row">{{ icon('cap') }}<span class="k">Branch</span><span class="v">{{ student.branch or '—' }}</span></div>
+            <div class="detail-row">{{ icon('mail') }}<span class="k">Email</span><span class="v">{{ student.email or '—' }}</span></div>
+            <div class="detail-row">{{ icon('phone') }}<span class="k">Phone</span><span class="v">{{ student.phone or '—' }}</span></div>
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-head"><span class="chip-icon">{{ icon('home') }}</span><h2>Room Allocation</h2>
+            <span class="spacer">{% if allocation %}<span class="badge badge-success">{{ icon('check') }} ALLOCATED</span>{% else %}<span class="badge badge-warning">{{ icon('alert') }} WAITING</span>{% endif %}</span></div>
+        {% if allocation %}
+            <div class="detail-list">
+                <div class="detail-row">{{ icon('home') }}<span class="k">Room</span><span class="v">Room {{ '%02d'|format(allocation.room_number) }}</span></div>
+                <div class="detail-row">{{ icon('bed') }}<span class="k">Sharing type</span><span class="v">{{ allocation.room_size }}-sharing</span></div>
+            </div>
+            <div class="progress-row" style="margin-top:14px">
+                <span class="hint">Compatibility</span>
+                <div class="progress {{ tone(allocation.avg_compatibility) }}"><span style="width: {{ allocation.avg_compatibility }}%"></span></div>
+                <span class="pct">{{ allocation.avg_compatibility }}%</span>
+            </div>
+            <h3 style="margin-top:18px">Roommates</h3>
+            <div class="roommate-list">
+                {% for r in allocation.roommates %}
+                    <a class="roommate" href="{{ url_for('admin_student_profile', student_id=r.id) }}"><span class="avatar avatar-sm">{{ r.name|initials }}</span>{{ r.name }}</a>
+                {% else %}<p class="hint">No roommates assigned.</p>{% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">{{ icon('info') }}<div>Not placed in a room yet. Generate an allocation to assign one.</div></div>
+        {% endif %}
+    </section>
+</div>
+
+<section class="card mt">
+    <div class="card-head"><span class="chip-icon">{{ icon('users') }}</span><h2>Language &amp; Background</h2></div>
+    <div class="detail-list">
+        <div class="detail-row">{{ icon('book') }}<span class="k">Language preference</span><span class="v">{{ student.language_preference or '—' }}</span></div>
+        <div class="detail-row">{{ icon('user') }}<span class="k">Mother tongue</span><span class="v">{{ student.mother_tongue or '—' }}</span></div>
+        <div class="detail-row">{{ icon('heart') }}<span class="k">Religion</span><span class="v">{{ student.religion or '—' }}</span></div>
+    </div>
+</section>
+
+<section class="card mt">
+    <div class="card-head"><span class="chip-icon">{{ icon('heart') }}</span><h2>Lifestyle Preferences</h2></div>
+    {% with s=student, mine=none %}{% include "_prefs.html" %}{% endwith %}
+
+    <h3 style="margin-top:24px">Preferred roommates</h3>
+    {% if preferred_students %}
+        <div class="roommate-list">
+            {% for r in preferred_students %}<div class="roommate"><span class="avatar avatar-sm">{{ r.name|initials }}</span>{{ r.name }}</div>{% endfor %}
+        </div>
+    {% else %}<p class="hint" style="margin-top:8px">No preferred roommates selected.</p>{% endif %}
+</section>
+
+<section class="card mt danger-zone">
+    <div class="card-head" style="margin-bottom:0">
+        <span class="chip-icon danger">{{ icon('alert') }}</span>
+        <div class="grow"><h2>Remove student</h2>
+            <p class="hint">{% if allocation_locked %}Unlock the allocation before removing a student.{% else %}This deletes the profile and clears the current allocation.{% endif %}</p></div>
+        <form method="POST" action="{{ url_for('delete_student', student_id=student.id) }}" class="inline-form"
+              onsubmit='return confirm({{ ("Remove " ~ student.name ~ "? The current allocation will be cleared.")|tojson }});'>
+            {{ csrf() }}<button type="submit" class="btn btn-danger btn-sm" {% if allocation_locked %}disabled{% endif %}>Remove student</button>
+        </form>
+    </div>
+</section>
+
+{% endblock %}

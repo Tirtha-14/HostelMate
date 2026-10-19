@@ -1,0 +1,66 @@
+{% from "_macros.html" import icon %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}HostelMate{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+{% block layout %}
+
+    {% if session.get("user_id") %}
+    {% set role = session.get("role") %}
+    {% set ep = request.endpoint %}
+
+    <header class="navbar">
+        <div class="navbar-inner">
+
+            <a class="brand" href="{{ url_for('index') }}">
+                <span class="brand-mark">{{ icon('home', 18) }}</span>
+                HostelMate
+            </a>
+
+            <nav class="nav-links" aria-label="Main">
+                {% if role == "student" %}
+                    <a href="{{ url_for('student_home') }}" class="{{ 'active' if ep == 'student_home' }}">Home</a>
+                    <a href="{{ url_for('students') }}" class="{{ 'active' if ep in ('students', 'student_view_profile') }}">All Students</a>
+                    <a href="{{ url_for('student_profile') }}" class="{{ 'active' if ep in ('student_profile', 'register') }}">My Profile</a>
+                {% elif role == "admin" %}
+                    <a href="{{ url_for('admin_home') }}" class="{{ 'active' if ep == 'admin_home' }}">Dashboard</a>
+                    <a href="{{ url_for('students') }}" class="{{ 'active' if ep in ('students', 'admin_student_profile') }}">Students</a>
+                    <a href="{{ url_for('allocate') }}" class="{{ 'active' if ep == 'allocate' }}">Allocation</a>
+                {% endif %}
+            </nav>
+
+            <div class="nav-user">
+                <div class="nav-user-info">
+                    <span class="avatar">{{ session.get("username", "?")|initials }}</span>
+                    <div>
+                        <div class="nav-user-name">{{ session.get("username") }}</div>
+                        <div class="nav-user-role">{{ role|capitalize }}</div>
+                    </div>
+                </div>
+                <a class="nav-logout" href="{{ url_for('logout') }}">{{ icon('logout') }} Logout</a>
+            </div>
+
+        </div>
+    </header>
+
+    {% endif %}
+
+    <main class="container">
+        {% include "_flash.html" %}
+        {% block content %}{% endblock %}
+    </main>
+
+{% endblock %}
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
